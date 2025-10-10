@@ -1,0 +1,54 @@
+/* Load Rajdhani from Google Fonts (optional if using @nuxt/fonts) */
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+/* Define global design tokens (Tailwind v4) */
+@theme static {
+	/* Font family */
+	--font-sans: 'Rajdhani', system-ui, sans-serif;
+
+	/* Color palettes (50–950), anchored at 50. 50 stays defined. */
+	--color-red-50: #ff4655; /* brand red (anchor) */
+	--color-dark-50: #0f1923; /* base dark (anchor) */
+	--color-gray-50: #accdf0; /* base gray (anchor) */
+
+	/* Red derived from 50: lighter (towards white), then darker (towards black) */
+	--color-red-100: color-mix(in oklch, var(--color-red-50) 90%, white 10%);
+	--color-red-200: color-mix(in oklch, var(--color-red-50) 80%, white 20%);
+	--color-red-300: color-mix(in oklch, var(--color-red-50) 70%, white 30%);
+	--color-red-400: color-mix(in oklch, var(--color-red-50) 60%, white 40%);
+	--color-red-500: color-mix(in oklch, var(--color-red-50) 85%, black 15%);
+	--color-red-600: color-mix(in oklch, var(--color-red-50) 75%, black 25%);
+	--color-red-700: color-mix(in oklch, var(--color-red-50) 60%, black 40%);
+	--color-red-800: color-mix(in oklch, var(--color-red-50) 45%, black 55%);
+	--color-red-900: color-mix(in oklch, var(--color-red-50) 35%, black 65%);
+	--color-red-950: color-mix(in oklch, var(--color-red-50) 25%, black 75%);
+
+	/* Dark derived from 50 */
+	--color-dark-100: color-mix(in oklch, var(--color-dark-50) 90%, white 10%);
+	--color-dark-200: color-mix(in oklch, var(--color-dark-50) 80%, white 20%);
+	--color-dark-300: color-mix(in oklch, var(--color-dark-50) 70%, white 30%);
+	--color-dark-400: color-mix(in oklch, var(--color-dark-50) 60%, white 40%);
+	--color-dark-500: color-mix(in oklch, var(--color-dark-50) 85%, black 15%);
+	--color-dark-600: color-mix(in oklch, var(--color-dark-50) 75%, black 25%);
+	--color-dark-700: color-mix(in oklch, var(--color-dark-50) 60%, black 40%);
+	--color-dark-800: color-mix(in oklch, var(--color-dark-50) 45%, black 55%);
+	--color-dark-900: color-mix(in oklch, var(--color-dark-50) 35%, black 65%);
+	--color-dark-950: color-mix(in oklch, var(--color-dark-50) 25%, black 75%);
+
+	/* Gray derived from 50 */
+	--color-gray-100: color-mix(in oklch, var(--color-gray-50) 90%, white 10%);
+	--color-gray-200: color-mix(in oklch, var(--color-gray-50) 80%, white 20%);
+	--color-gray-300: color-mix(in oklch, var(--color-gray-50) 70%, white 30%);
+	--color-gray-400: color-mix(in oklch, var(--color-gray-50) 60%, white 40%);
+	--color-gray-500: color-mix(in oklch, var(--color-gray-50) 85%, black 15%);
+	--color-gray-600: color-mix(in oklch, var(--color-gray-50) 75%, black 25%);
+	--color-gray-700: color-mix(in oklch, var(--color-gray-50) 60%, black 40%);
+	--color-gray-800: color-mix(in oklch, var(--color-gray-50) 45%, black 55%);
+	--color-gray-900: color-mix(in oklch, var(--color-gray-50) 35%, black 65%);
+	--color-gray-950: color-mix(in oklch, var(--color-gray-50) 25%, black 75%);
+
+	/* Light — keep as is */
+	--color-light-50: #ece8e1;
+}
