@@ -1,75 +1,59 @@
-# Nuxt Minimal Starter
+## Valorant Skin Collector (Frontend)
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Valorant Skin Collector is a web app that lets players track and showcase their owned weapon skins and build a wishlist for future purchases. It uses the community/unofficial Valorant API to fetch skin metadata and provides a clean, modern UI to manage your personal collection.
 
-## Setup
+> Note: This project is not affiliated with Riot Games. It uses community/unofficial API sources. Availability and stability of data may vary.
 
-Make sure to install dependencies:
+### Key features
+
+- Browse Valorant weapon skins and collections
+- Create your personal “Owned” collection for every weapon
+- Build a “Wishlist” of skins you’d like to buy later
+- Filter/search by weapon, collection, and more
+- Responsive UI with a Valorant-inspired theme
+
+### Tech stack
+
+- Nuxt 4 + Vue 3
+- Nuxt UI v4 (semantic theming)
+- Tailwind CSS v4 (design tokens)
+- Pinia (state management)
+
+### Getting started
+
+Install dependencies:
 
 ```bash
-# npm
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+Start the dev server at http://localhost:3000:
 
 ```bash
-# npm
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
-
-Build the application for production:
+### Build & preview
 
 ```bash
-# npm
+# Production build
 npm run build
 
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
+# Preview the production build locally
 npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+### Configuration
+
+- The UI theme colors are defined via CSS design tokens in `app/assets/css/main.css`, anchored at the `-50` shade and derived across the full scale.
+- Nuxt UI semantic colors are mapped in `app/app.config.ts` (e.g., `primary: 'red'`).
+- Tailwind config lives in `tailwind.config.ts`.
+
+### API notes
+
+- The app expects skin data from an unofficial/community Valorant API. If you change providers or add a proxy, document the base URL and auth flow as needed.
+- Consider caching responses or adding retries for rate limits/instability.
+
+### Disclaimer
+
+Valorant is a trademark of Riot Games. This project is for educational/personal use and is not endorsed by or affiliated with Riot Games.
