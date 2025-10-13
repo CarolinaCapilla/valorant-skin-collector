@@ -12,13 +12,13 @@ import { useSkinsStore } from '~/stores/skins'
 
 const store = useSkinsStore()
 
-await callOnce('bootstrap:content-tiers', () => store.fetchContentTiers())
+await callOnce('content-tiers', () => store.fetchContentTiers())
 
 await Promise.all([
-	callOnce('bootstrap:collections', () => store.fetchSkinCollections()),
-	callOnce('bootstrap:weapons', () => store.fetchWeapons())
+	callOnce('collections', () => store.fetchSkinCollections()),
+	callOnce('weapons', () => store.fetchWeapons())
 ])
 
-await callOnce('bootstrap:skins', () => store.fetchSkins())
+await callOnce('skins', () => store.fetchSkins())
 const { filteredSkins } = storeToRefs(store)
 </script>
