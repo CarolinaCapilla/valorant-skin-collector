@@ -4,5 +4,9 @@ export interface Skin {
 	image_url: string
 	weapon: string
 	collection: string
-	tier: string
+	tier: {
+		name: string
+		image_url: string
+	} | null
+	tier_id?: string
 }

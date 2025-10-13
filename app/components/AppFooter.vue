@@ -11,9 +11,9 @@
 				icon="i-simple-icons-linkedin"
 				color="secondary"
 				variant="ghost"
-				to="https://go.nuxt.com/x"
+				to="https://www.linkedin.com/in/carolina-capilla/"
 				target="_blank"
-				aria-label="X"
+				aria-label="linkedin"
 				:ui="{
 					base: 'text-white'
 				}"
@@ -23,7 +23,7 @@
 				icon="i-simple-icons-github"
 				color="secondary"
 				variant="ghost"
-				to="https://github.com/nuxt/nuxt"
+				to="https://github.com/CarolinaCapilla"
 				target="_blank"
 				aria-label="GitHub"
 				:ui="{

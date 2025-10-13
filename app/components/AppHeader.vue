@@ -11,7 +11,7 @@
 		<!-- </NuxtLink> -->
 		<!-- </template> -->
 
-		<UNavigationMenu highlight :items="items" variant="link" />
+		<UNavigationMenu :items="items" variant="link" />
 
 		<template #right>
 			<UButton
@@ -63,10 +63,6 @@ const items = computed(() => [
 	{
 		label: 'Wishlist',
 		to: '/wishlist'
-	},
-	{
-		label: 'Changelog',
-		to: '/changelog'
 	}
 ])
 </script>

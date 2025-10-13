@@ -1,10 +1,24 @@
 <template>
 	<div>
 		<FilterBar />
+		<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 px-9">
+			<SkinCard v-for="skin in filteredSkins" :key="skin.id" :skin="skin" />
+		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-// import { useSkinsStore } from '~/stores/skins'
-// const { skins } = storeToRefs(useSkinsStore());
+import { useSkinsStore } from '~/stores/skins'
+
+const store = useSkinsStore()
+
+await callOnce('bootstrap:content-tiers', () => store.fetchContentTiers())
+
+await Promise.all([
+	callOnce('bootstrap:collections', () => store.fetchSkinCollections()),
+	callOnce('bootstrap:weapons', () => store.fetchWeapons())
+])
+
+await callOnce('bootstrap:skins', () => store.fetchSkins())
+const { filteredSkins } = storeToRefs(store)
 </script>
