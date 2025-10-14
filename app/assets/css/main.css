@@ -52,3 +52,89 @@
 	/* Light — keep as is */
 	--color-light-50: #ece8e1;
 }
+
+/* Outline-to-solid sweep button effect */
+.btn-sweep {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.5rem 1rem;
+	border-radius: 0.5rem;
+	border: 1px solid color-mix(in oklch, var(--color-primary) 90%, white 10%);
+	color: var(--color-primary) !important;
+	background: transparent;
+	overflow: hidden;
+	transition:
+		color 200ms ease,
+		border-color 200ms ease;
+}
+.btn-sweep::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	transform: translateX(100%);
+	background: linear-gradient(
+		to left,
+		color-mix(in oklch, var(--color-primary) 100%, black 0%),
+		var(--color-primary)
+	);
+	transition: transform 300ms ease;
+	z-index: -1;
+}
+.btn-sweep:hover::before {
+	transform: translateX(0%);
+}
+
+.btn-sweep:hover {
+	color: white !important;
+	border-color: var(--color-primary);
+}
+
+/* Solid-to-outline sweep (inverse) */
+.btn-sweep-inverse {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.5rem 1rem;
+	border-radius: 0.5rem;
+	border: 1px solid var(--color-primary);
+	color: white !important; /* ensure readable over solid */
+	background: transparent !important;
+	overflow: hidden;
+	transition:
+		color 200ms ease,
+		border-color 200ms ease;
+}
+.btn-sweep-inverse::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	transform: translateX(0%);
+	background: var(--color-primary);
+	transition: transform 300ms ease;
+	z-index: 0;
+}
+.btn-sweep-inverse:hover::before {
+	transform: translateX(100%);
+}
+.btn-sweep-inverse:hover {
+	color: var(--color-primary) !important;
+}
+
+/* Ensure inner content sits above the overlay */
+.btn-sweep > *,
+.btn-sweep-inverse > * {
+	position: relative;
+	z-index: 1;
+	color: inherit;
+}
+
+/* Ensure ALL nested content inherits the intended color (overrides library defaults) */
+.btn-sweep *,
+.btn-sweep-inverse * {
+	color: inherit !important;
+}
