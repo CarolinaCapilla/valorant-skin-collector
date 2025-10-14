@@ -1,5 +1,6 @@
 export default defineNuxtConfig({
-	modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxt/eslint'],
+	modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxt/eslint', '@hypernym/nuxt-anime', '@nuxt/image'],
+
 	devtools: {
 		enabled: true
 	},
@@ -12,6 +13,9 @@ export default defineNuxtConfig({
 		}
 	},
 	compatibilityDate: '2025-10-10',
+	anime: {
+		provide: true
+	},
 	eslint: {
 		config: {
 			stylistic: {
