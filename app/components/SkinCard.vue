@@ -1,8 +1,8 @@
 <template>
 	<UCard
-		class="relative overflow-hidden border border-neutral-700 hover:border-primary hover:scale-[1.02] transition-all duration-200 rounded-lg shadow-lg"
+		class="skin-card relative overflow-hidden border border-neutral-700 transition-all duration-200 rounded-lg shadow-lg"
 	>
-		<img
+		<NuxtImg
 			:src="skin.image_url"
 			:alt="skin.name"
 			class="w-full h-40 object-contain p-2 bg-black/20"
@@ -15,7 +15,7 @@
 				v-if="skin.tier"
 				class="mt-1 flex items-center justify-center gap-2 text-xs text-neutral-300"
 			>
-				<img
+				<NuxtImg
 					v-if="skin.tier.image_url"
 					:src="skin.tier.image_url"
 					:alt="`${skin.tier.name} icon`"
@@ -25,16 +25,12 @@
 			</div>
 
 			<UButton
-				:label="owned ? 'In Collection' : 'Add to Collection'"
-				:color="owned ? 'neutral' : 'primary'"
-				:variant="owned ? 'soft' : 'solid'"
-				class="mt-3 w-full"
+				:label="owned ? 'Remove from Collection' : 'Add to Collection'"
+				:class="['mt-3 w-full', owned ? 'btn-sweep-inverse' : 'btn-sweep']"
 			/>
 			<UButton
-				:label="wishlisted ? 'In Wishlist' : 'Add to Wishlist'"
-				:color="wishlisted ? 'neutral' : 'primary'"
-				:variant="wishlisted ? 'soft' : 'outline'"
-				class="mt-3 w-full"
+				:label="wishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'"
+				:class="['mt-3 w-full', wishlisted ? 'btn-sweep-inverse' : 'btn-sweep']"
 			/>
 		</div>
 	</UCard>
@@ -42,10 +38,48 @@
 
 <script setup lang="ts">
 import type { Skin } from '~/data/skin'
+import { onMounted } from 'vue'
+
+const { $anime } = useNuxtApp()
 
 defineProps<{
 	skin: Skin
 	owned?: boolean
 	wishlisted?: boolean
 }>()
+
+onMounted(async () => {
+	// 🔸 Skin card reveal animation
+	// $anime({
+	// 	targets: '.skin-card',
+	// 	opacity: [0, 1],
+	// 	translateY: [40, 0],
+	// 	delay: $anime.stagger(120, { start: 400 }),
+	// 	duration: 800,
+	// 	easing: 'easeOutExpo'
+	// })
+
+	// 🔸 Hover glow
+	const cards = document.querySelectorAll('.skin-card')
+	cards.forEach((card) => {
+		card.addEventListener('mouseenter', () => {
+			$anime({
+				targets: card,
+				scale: 1.05,
+				boxShadow: '0 0 25px 2px rgba(255,70,85,0.6)',
+				duration: 300,
+				easing: 'easeOutQuad'
+			})
+		})
+		card.addEventListener('mouseleave', () => {
+			$anime({
+				targets: card,
+				scale: 1,
+				boxShadow: '0 0 0px rgba(0,0,0,0)',
+				duration: 300,
+				easing: 'easeOutQuad'
+			})
+		})
+	})
+})
 </script>

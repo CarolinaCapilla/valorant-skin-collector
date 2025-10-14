@@ -70,6 +70,34 @@ export const useSkinsStore = defineStore('skins', {
 				if (query && !s.name.toLowerCase().includes(query)) return false
 				return true
 			})
+		},
+		filteredOwned(): Skin[] {
+			const weapon = this.filters.weapon
+			const collection = this.filters.collection
+			const tier = this.filters.tier
+			const query = this.filters.search.toLowerCase().trim()
+
+			return this.owned.filter((s) => {
+				if (weapon && s.weapon !== weapon) return false
+				if (collection && s.collection !== collection) return false
+				if (tier && s.tier_id !== tier) return false
+				if (query && !s.name.toLowerCase().includes(query)) return false
+				return true
+			})
+		},
+		filteredWishlist(): Skin[] {
+			const weapon = this.filters.weapon
+			const collection = this.filters.collection
+			const tier = this.filters.tier
+			const query = this.filters.search.toLowerCase().trim()
+
+			return this.wishlist.filter((s) => {
+				if (weapon && s.weapon !== weapon) return false
+				if (collection && s.collection !== collection) return false
+				if (tier && s.tier_id !== tier) return false
+				if (query && !s.name.toLowerCase().includes(query)) return false
+				return true
+			})
 		}
 	},
 
@@ -102,12 +130,28 @@ export const useSkinsStore = defineStore('skins', {
 						it.weaponUuid ?? (skinUuid ? this.skinToWeaponBySkinId[skinUuid] : '') ?? ''
 					return {
 						id: idx,
+						uuid: skinUuid,
 						name: it.displayName ?? 'Unknown',
 						image_url: image,
 						weapon: weaponUuid,
 						collection: it.themeUuid ?? '',
 						tier: tierMeta ? { name: tierMeta.name, image_url: tierMeta.image_url } : null,
-						tier_id: tierUuid
+						tier_id: tierUuid,
+						levels: (it.levels ?? []).map((lv) => ({
+							uuid: lv.uuid,
+							displayName: lv.displayName ?? null,
+							displayIcon: lv.displayIcon ?? null,
+							streamedVideo: lv.streamedVideo ?? null,
+							levelItem: lv.levelItem ?? null
+						})),
+						chromas: (it.chromas ?? []).map((ch) => ({
+							uuid: ch.uuid,
+							displayName: ch.displayName ?? null,
+							displayIcon: ch.displayIcon ?? null,
+							fullRender: ch.fullRender ?? null,
+							swatch: ch.swatch ?? null,
+							streamedVideo: ch.streamedVideo ?? null
+						}))
 					}
 				})
 			} catch (error) {
