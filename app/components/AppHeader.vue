@@ -1,10 +1,21 @@
 <template>
 	<UHeader :ui="{ title: 'text-white font-bold' }">
+		<!-- NOTE: Avoid using <NuxtLink> directly inside the #title slot here.
+		Using NuxtLink (or ULink wrapping it) caused hydration child-node
+		mismatches between SSR and client -->
 		<template #title>
-			<NuxtLink to="/" class="flex items-center gap-2 justify-center">
-				<AppLogo class="h-6 w-auto shrink-0" />
+			<div
+				class="flex items-center gap-2 justify-center cursor-pointer select-none"
+				role="link"
+				tabindex="0"
+				aria-label="Valorant Skin Collector"
+				@click="$router.push('/')"
+				@keyup.enter="$router.push('/')"
+				@keyup.space.prevent="$router.push('/')"
+			>
+				<AppLogo />
 				<span>Valorant Skin Collector</span>
-			</NuxtLink>
+			</div>
 		</template>
 
 		<UNavigationMenu :items="items" variant="link" />

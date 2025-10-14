@@ -1,15 +1,18 @@
 <template>
-	<UAvatar
-		:src="logoUrl"
+	<NuxtImg
+		src="/valorant_skin_collector_logo.png"
 		alt="Valorant Skin Collector"
-		size="lg"
-		class="rounded-lg bg-transparent ring-0 shadow-none"
+		height="40"
+		width="40"
+		class="h-6 w-auto"
+		decoding="async"
+		loading="lazy"
 	/>
 </template>
 
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import { computed } from 'vue'
 
 const config = useRuntimeConfig()
 const logoUrl = computed(() => `${config.app.baseURL || '/'}valorant_skin_collector_logo.png`)
-</script>
+</script> -->
