@@ -1,6 +1,5 @@
 export default defineNuxtConfig({
 	modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxt/eslint', '@hypernym/nuxt-anime', '@nuxt/image'],
-
 	devtools: {
 		enabled: true
 	},
@@ -10,6 +9,12 @@ export default defineNuxtConfig({
 			// Register additional semantic color names (strings), not objects
 			// If you only use the defaults, you can remove this block entirely.
 			colors: ['primary', 'secondary', 'tertiary', 'info', 'success', 'warning', 'error']
+		}
+	},
+	runtimeConfig: {
+		public: {
+			backendFetchSize: 300,
+			backendBaseUrl: 'http://localhost:8000'
 		}
 	},
 	compatibilityDate: '2025-10-10',

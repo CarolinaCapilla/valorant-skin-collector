@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia'
 import { $fetch } from 'ofetch'
-import type { Skin } from '~/data/skin'
+import type { Skin, SkinLevel, SkinChroma } from '~/data/skin'
 import type {
 	ValorantApiResponse,
 	ValorantContentTier,
-	ValorantSkinItem,
 	ValorantSkinCollection,
-	ValorantWeapon
+	ValorantWeapon,
+	BackendSkin
 } from '~/data/api'
+// NOTE: Do not call composables like `useRuntimeConfig()` at module top-level.
+// We'll read runtime config inside actions where Vue/Nuxt setup context is available.
 
 export const useSkinsStore = defineStore('skins', {
 	state: () => ({
@@ -116,43 +118,23 @@ export const useSkinsStore = defineStore('skins', {
 		},
 		async fetchSkins(): Promise<void> {
 			try {
-				const res = await $fetch<ValorantApiResponse<ValorantSkinItem[]>>(
-					'https://valorant-api.com/v1/weapons/skins'
-				)
-				const data = Array.isArray(res?.data) ? res.data : []
-				this.skins = data.map((it, idx): Skin => {
-					const image = it.displayIcon ?? it.levels?.[0]?.displayIcon ?? ''
-					const tierUuid = it.contentTierUuid ?? ''
-					const tierMeta = tierUuid ? this.contentTierById[tierUuid] : undefined
-					// Prefer explicit weaponUuid, otherwise derive via weapons mapping
-					const skinUuid = it.uuid ?? ''
-					const weaponUuid =
-						it.weaponUuid ?? (skinUuid ? this.skinToWeaponBySkinId[skinUuid] : '') ?? ''
-					return {
-						id: idx,
-						uuid: skinUuid,
-						name: it.displayName ?? 'Unknown',
-						image_url: image,
-						weapon: weaponUuid,
-						collection: it.themeUuid ?? '',
-						tier: tierMeta ? { name: tierMeta.name, image_url: tierMeta.image_url } : null,
-						tier_id: tierUuid,
-						levels: (it.levels ?? []).map((lv) => ({
-							uuid: lv.uuid,
-							displayName: lv.displayName ?? null,
-							displayIcon: lv.displayIcon ?? null,
-							streamedVideo: lv.streamedVideo ?? null,
-							levelItem: lv.levelItem ?? null
-						})),
-						chromas: (it.chromas ?? []).map((ch) => ({
-							uuid: ch.uuid,
-							displayName: ch.displayName ?? null,
-							displayIcon: ch.displayIcon ?? null,
-							fullRender: ch.fullRender ?? null,
-							swatch: ch.swatch ?? null,
-							streamedVideo: ch.streamedVideo ?? null
-						}))
+				await this.fetchSkinsFromApi()
+
+				// Post-process: ensure weapon and tier metadata are filled when possible
+				this.skins = this.skins.map((s) => {
+					// Fill weapon from reverse map when missing
+					if ((!s.weapon || s.weapon === '') && s.uuid) {
+						const fromMap = this.skinToWeaponBySkinId[s.uuid]
+						if (fromMap) s.weapon = fromMap
 					}
+
+					// Fill tier meta from contentTierById when absent
+					if ((s.tier === null || !s.tier?.name) && s.tier_id) {
+						const tierMeta = this.contentTierById[s.tier_id]
+						if (tierMeta) s.tier = { name: tierMeta.name, image_url: tierMeta.image_url }
+					}
+
+					return s
 				})
 			} catch (error) {
 				console.error('Failed to fetch skins', error)
@@ -231,6 +213,49 @@ export const useSkinsStore = defineStore('skins', {
 				console.error('Failed to fetch weapons', error)
 			}
 		},
+
+		async fetchSkinsFromApi(): Promise<void> {
+			try {
+				const runtime = useRuntimeConfig()
+				const BACKEND_FETCH_SIZE = runtime.public?.backendFetchSize ?? 500
+				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+
+				const url = `${BACKEND_BASE_URL}/api/v1/skins?perPage=${BACKEND_FETCH_SIZE}&page=1`
+				const res = await $fetch<{ data?: BackendSkin[] }>(url)
+				const items = Array.isArray(res?.data) ? res.data : []
+				console.debug('fetchSkinsFromApi: backend returned items=', items.length)
+				this.skins = items.map((it: BackendSkin, idx: number): Skin => {
+					return {
+						id: idx,
+						uuid: it.uuid ?? '',
+						name: it.name ?? 'Unknown',
+						image_url: it.image_url ?? it.image ?? '',
+						weapon: it.weapon ?? '',
+						collection: it.collection ?? '',
+						tier: it.tier ?? null,
+						tier_id: it.tier_id ?? '',
+						levels: (it.levels ?? []).map((lv: SkinLevel) => ({
+							uuid: lv.uuid,
+							displayName: lv.displayName ?? null,
+							displayIcon: lv.displayIcon ?? null,
+							streamedVideo: lv.streamedVideo ?? null,
+							levelItem: lv.levelItem ?? null
+						})),
+						chromas: (it.chromas ?? []).map((ch: SkinChroma) => ({
+							uuid: ch.uuid,
+							displayName: ch.displayName ?? null,
+							displayIcon: ch.displayIcon ?? null,
+							fullRender: ch.fullRender ?? null,
+							swatch: ch.swatch ?? null,
+							streamedVideo: ch.streamedVideo ?? null
+						}))
+					}
+				})
+			} catch (error) {
+				console.error('Failed to fetch skins from API', error)
+			}
+		},
+
 		clearFilters(): void {
 			this.filters.weapon = ''
 			this.filters.collection = ''

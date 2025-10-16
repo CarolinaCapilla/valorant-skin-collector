@@ -1,3 +1,5 @@
+import type { SkinLevel, SkinChroma } from './skin'
+
 export type ValorantApiResponse<T> = {
 	status: number
 	data: T
@@ -49,4 +51,18 @@ export type ValorantWeapon = {
 		uuid?: string
 		displayName?: string
 	}>
+}
+
+// Backend DTO for a skin — mirrors a subset of the UI `Skin` shape
+export type BackendSkin = {
+	uuid?: string
+	name?: string
+	image_url?: string
+	image?: string
+	weapon?: string
+	collection?: string
+	tier?: { name: string; image_url: string } | null
+	tier_id?: string
+	levels?: SkinLevel[]
+	chromas?: SkinChroma[]
 }
