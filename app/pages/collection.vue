@@ -116,126 +116,13 @@
 			</div>
 		</section>
 
-		<!-- Modal: richer viewer with video, chromas, and levels -->
-		<UModal
-			title="Skin preview"
-			:close="{ color: 'primary', variant: 'outline', class: 'rounded-full' }"
+		<SkinModal
 			:open="modalOpen"
+			:skins="modalSkins"
+			:skin-index="modalSkinIndex"
 			@update:open="modalOpen = $event"
-		>
-			<template #body>
-				<div class="p-2">
-					<div v-if="currentModalSkin" class="space-y-4">
-						<!-- Media area: prefer video, fallback to image -->
-						<div
-							class="w-full max-w-5xl mx-auto relative"
-							tabindex="0"
-							@keyup.left.prevent="prevSkin"
-							@keyup.right.prevent="nextSkin"
-						>
-							<video
-								v-if="activeStream"
-								:key="activeStream || 'stream'"
-								class="w-full rounded-lg"
-								:src="activeStream || undefined"
-								controls
-							></video>
-							<div
-								v-else
-								class="flex flex-col items-center justify-center h-[360px] bg-black/30 rounded-lg text-neutral-300"
-							>
-								<UIcon name="i-lucide-alert-triangle" class="h-10 w-10 text-neutral-400 mb-2" />
-								<p>No video available</p>
-							</div>
-						</div>
-
-						<!-- Variant (chromas) swatches on right like reference -->
-						<div class="flex items-center justify-between gap-3">
-							<div class="flex items-center gap-2">
-								<UButton
-									v-for="(lvl, idx) in currentModalSkin.levels || []"
-									:key="lvl.uuid || idx"
-									size="xs"
-									:color="idx === modalLevelIndex ? 'primary' : 'neutral'"
-									variant="outline"
-									class="min-w-8"
-									:disabled="!isDefaultChromaSelected"
-									@click="setModalLevel(idx)"
-								>
-									{{ roman(idx + 1) }}
-								</UButton>
-							</div>
-							<div class="flex items-center gap-2">
-								<UButton
-									v-for="(ch, cidx) in filteredChromas"
-									:key="ch.uuid || cidx"
-									variant="ghost"
-									color="neutral"
-									size="xs"
-									class="h-8 w-8 p-0 rounded shadow-inner border !bg-cover !bg-center"
-									:class="
-										cidx === modalChromaIndex
-											? 'border-primary-500 ring-1 ring-primary-500'
-											: 'border-neutral-700'
-									"
-									:style="{ backgroundImage: `url(${ch.swatch})` }"
-									:aria-label="ch.displayName || 'Chroma'"
-									@click="setModalChroma(cidx)"
-								/>
-							</div>
-						</div>
-
-						<!-- Details -->
-						<div class="text-center space-y-2">
-							<div class="flex items-center justify-center gap-3">
-								<UButton
-									size="xs"
-									color="neutral"
-									variant="ghost"
-									icon="i-lucide-arrow-left"
-									:disabled="!canPrev"
-									@click="prevSkin"
-								>
-								</UButton>
-								<NuxtImg
-									v-if="headerImageUrl"
-									:src="headerImageUrl"
-									alt="Chroma image"
-									class="h-12 object-contain"
-								/>
-								<div v-else class="h-12 w-12" />
-								<UButton
-									size="xs"
-									color="neutral"
-									variant="ghost"
-									icon="i-lucide-arrow-right"
-									:disabled="!canNext"
-									@click="nextSkin"
-								>
-								</UButton>
-							</div>
-							<h3 class="text-xl font-semibold text-white">
-								{{ (activeChroma && activeChroma.displayName) || currentModalSkin.name }}
-							</h3>
-							<div
-								v-if="currentModalSkin.tier?.name"
-								class="flex items-center justify-center gap-2 text-neutral-300 text-sm"
-							>
-								<NuxtImg
-									v-if="currentModalSkin.tier?.image_url"
-									:src="currentModalSkin.tier.image_url"
-									alt="Tier"
-									class="h-4 w-4 object-contain"
-								/>
-								<span>{{ currentModalSkin.tier?.name }}</span>
-							</div>
-						</div>
-					</div>
-
-					<div v-else class="text-neutral-400 text-sm">No skins to preview.</div>
-				</div>
-			</template>
-		</UModal>
+			@update:skin-index="modalSkinIndex = $event"
+		/>
 	</div>
 </template>
 
@@ -341,105 +228,17 @@ const nameByImage = (weaponId: string | undefined, item: unknown): string => {
 const modalOpen = ref(false)
 const modalWeaponId = ref<string | null>(null)
 const modalSkinIndex = ref(0)
-const modalChromaIndex = ref(0)
-const modalLevelIndex = ref(0)
 
 const modalSkins = computed(() => ownedForWeapon(modalWeaponId.value || undefined))
-const currentModalSkin = computed(() => modalSkins.value[modalSkinIndex.value] || null)
 
 // Track current carousel index per weapon so modal can open on visible skin
 const carouselIndex = reactive<Record<string, number>>({})
-
-const activeLevel = computed(() => currentModalSkin.value?.levels?.[modalLevelIndex.value] || null)
-// Filtered chromas: show only those with an explicit swatch (hide chromas without a swatch entirely)
-const filteredChromas = computed(() => {
-	const chromas = currentModalSkin.value?.chromas || []
-	return chromas.filter((c) => Boolean(c?.swatch))
-})
-
-const activeChroma = computed(() => {
-	// Primary source: filtered list (swatch/displayIcon)
-	const fromFiltered = filteredChromas.value[modalChromaIndex.value]
-	if (fromFiltered) return fromFiltered
-	// Fallback: if there are no filtered chromas (e.g., fullRender-only), use the first raw chroma
-	const rawFirst = currentModalSkin.value?.chromas?.[0]
-	return rawFirst || null
-})
-
-const activeStream = computed<string | null>(() => {
-	// Prefer chroma video when a chroma is selected; fall back to level
-	return (
-		(activeChroma.value && activeChroma.value.streamedVideo) ||
-		(activeLevel.value && activeLevel.value.streamedVideo) ||
-		null
-	)
-})
-
-// Note: when no streamed video is available, we show a placeholder instead of an image
-
-// Header image logic:
-// If chroma has a swatch (therefore also a displayIcon per assumption) show displayIcon (not the swatch asset itself).
-// If no swatch, show fullRender.
-const headerImageUrl = computed(() => {
-	if (!activeChroma.value) return ''
-	if (activeChroma.value.swatch) return activeChroma.value.displayIcon || ''
-	return activeChroma.value.fullRender || ''
-})
-
-// Ensure chroma index remains valid if filtered list shrinks or changes
-watch(filteredChromas, (list) => {
-	if (modalChromaIndex.value >= list.length) modalChromaIndex.value = 0
-})
-
-function setModalChroma(idx: number) {
-	modalChromaIndex.value = idx
-}
-function setModalLevel(idx: number) {
-	if (!isDefaultChromaSelected.value) return
-	modalLevelIndex.value = idx
-}
-
-function roman(n: number): string {
-	const map: [number, string][] = [
-		// [1000, 'M'],
-		// [900, 'CM'],
-		// [500, 'D'],
-		// [400, 'CD'],
-		// [100, 'C'],
-		// [90, 'XC'],
-		// [50, 'L'],
-		// [40, 'XL'],
-		// [10, 'X'],
-		// [9, 'IX'],
-		[5, 'V'],
-		[4, 'IV'],
-		[1, 'I']
-	]
-	let res = ''
-	let num = Math.max(1, Math.floor(n))
-	for (const [val, sym] of map) {
-		while (num >= val) {
-			res += sym
-			num -= val
-		}
-	}
-	return res
-}
-
-// helper class/style for chroma swatch to avoid long inline expressions
-watch(currentModalSkin, () => {
-	// reset selections when skin changes
-	modalChromaIndex.value = 0
-	modalLevelIndex.value = 0
-})
 
 const openModal = (weaponId?: string) => {
 	if (!weaponId) return
 	modalWeaponId.value = weaponId
 	// Use tracked carousel index for this weapon (default 0)
 	modalSkinIndex.value = carouselIndex[weaponId] || 0
-	modalChromaIndex.value = 0
-	modalLevelIndex.value = 0
 	modalOpen.value = true
 }
 
@@ -447,23 +246,6 @@ function handleCarouselSelect(weaponId: string | undefined, index: number) {
 	if (!weaponId) return
 	carouselIndex[weaponId] = index
 }
-
-// Navigation between owned skins in modal
-const canPrev = computed(() => modalSkinIndex.value > 0)
-const canNext = computed(() => modalSkinIndex.value < Math.max(0, modalSkins.value.length - 1))
-
-function prevSkin() {
-	if (!canPrev.value) return
-	modalSkinIndex.value -= 1
-}
-
-function nextSkin() {
-	if (!canNext.value) return
-	modalSkinIndex.value += 1
-}
-
-// Disable level selection when a non-default chroma is selected
-const isDefaultChromaSelected = computed(() => modalChromaIndex.value === 0)
 
 // Dev helpers: seed and clear demo owned skins
 const seedDemoOwned = () => {

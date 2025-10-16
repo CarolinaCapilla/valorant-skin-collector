@@ -1,6 +1,11 @@
 <template>
 	<UCard
-		class="skin-card relative overflow-hidden border border-neutral-700 transition-all duration-200 rounded-lg shadow-lg"
+		role="button"
+		tabindex="0"
+		class="skin-card relative overflow-hidden border border-neutral-700 transition-all duration-200 rounded-lg shadow-lg cursor-pointer focus:outline-none"
+		@click="onPreview"
+		@keyup.enter.stop="onPreview"
+		@keyup.space.prevent.stop="onPreview"
 	>
 		<NuxtImg
 			:src="skin.image_url"
@@ -24,14 +29,14 @@
 				<span class="font-medium">{{ skin.tier.name }}</span>
 			</div>
 
-			<UButton
+			<!-- <UButton
 				:label="owned ? 'Remove from Collection' : 'Add to Collection'"
 				:class="['mt-3 w-full', owned ? 'btn-sweep-inverse' : 'btn-sweep']"
 			/>
 			<UButton
 				:label="wishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'"
 				:class="['mt-3 w-full', wishlisted ? 'btn-sweep-inverse' : 'btn-sweep']"
-			/>
+			/> -->
 		</div>
 	</UCard>
 </template>
@@ -42,11 +47,19 @@ import { onMounted } from 'vue'
 
 const { $anime } = useNuxtApp()
 
-defineProps<{
+const props = defineProps<{
 	skin: Skin
 	owned?: boolean
 	wishlisted?: boolean
 }>()
+
+const emit = defineEmits<{
+	(e: 'preview', skin: Skin): void
+}>()
+
+function onPreview() {
+	emit('preview', props.skin)
+}
 
 onMounted(async () => {
 	// 🔸 Skin card reveal animation

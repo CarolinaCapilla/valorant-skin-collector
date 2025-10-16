@@ -32,7 +32,7 @@
 			</h1>
 			<p class="mt-4 text-neutral-300 text-2xl max-w-2xl mx-auto">
 				<span class="block">Browse, filter, and track your favorite Valorant weapon skins.</span>
-				<span class="block">Build your collection and wishlist with ease.</span>
+				<span class="block">Build your collection for free and with ease.</span>
 			</p>
 			<div class="mt-8 flex items-center justify-center gap-3">
 				<NuxtLink to="/skins">
