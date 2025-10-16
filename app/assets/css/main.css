@@ -53,6 +53,13 @@
 	--color-light-50: #ece8e1;
 }
 
+@layer base {
+	button:not(:disabled),
+	[role='button']:not([aria-disabled='true']) {
+		cursor: pointer;
+	}
+}
+
 /* Outline-to-solid sweep button effect */
 .btn-sweep {
 	position: relative;

@@ -1,6 +1,4 @@
 <template>
-	<!-- <USeparator icon="i-simple-icons-nuxtdotjs" type="solid" class="h-px" /> -->
-
 	<UFooter class="bg-primary">
 		<template #left>
 			<p class="text-white font-semibold">Copyright © {{ new Date().getFullYear() }}</p>
@@ -35,6 +33,4 @@
 	</UFooter>
 </template>
 
-<script setup lang="ts">
-defineOptions({ name: 'AppFooter' })
-</script>
+<script setup lang="ts"></script>
