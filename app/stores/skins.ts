@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import { $fetch } from 'ofetch'
-import type { Skin, SkinLevel, SkinChroma } from '~/data/skin'
+import type { Skin, SkinLevel, SkinChroma } from '~/types/skin'
 import type {
 	ValorantApiResponse,
 	ValorantContentTier,
 	ValorantSkinCollection,
 	ValorantWeapon,
 	BackendSkin
-} from '~/data/api'
+} from '~/types/api'
 // NOTE: Do not call composables like `useRuntimeConfig()` at module top-level.
 // We'll read runtime config inside actions where Vue/Nuxt setup context is available.
 
@@ -16,6 +16,7 @@ export const useSkinsStore = defineStore('skins', {
 		skins: [] as Skin[],
 		owned: [] as Skin[],
 		wishlist: [] as Skin[],
+		loading: false,
 		// filter selections (UUIDs)
 		filters: {
 			weapon: '' as string,
@@ -60,18 +61,21 @@ export const useSkinsStore = defineStore('skins', {
 				.sort((a, b) => a.label.localeCompare(b.label))
 		},
 		filteredSkins(): Skin[] {
+			console.log('[filteredSkins] Computing filtered skins...')
 			const weapon = this.filters.weapon
 			const collection = this.filters.collection
 			const tier = this.filters.tier
 			const query = this.filters.search.toLowerCase().trim()
 
-			return this.skins.filter((s) => {
+			const result = this.skins.filter((s) => {
 				if (weapon && s.weapon !== weapon) return false
 				if (collection && s.collection !== collection) return false
 				if (tier && s.tier_id !== tier) return false
 				if (query && !s.name.toLowerCase().includes(query)) return false
 				return true
 			})
+			console.log('[filteredSkins] Filtered result count:', result.length)
+			return result
 		},
 		filteredOwned(): Skin[] {
 			const weapon = this.filters.weapon
@@ -118,27 +122,15 @@ export const useSkinsStore = defineStore('skins', {
 		},
 		async fetchSkins(): Promise<void> {
 			try {
+				this.loading = true
+				console.log('[fetchSkins] Starting fetch...')
 				await this.fetchSkinsFromApi()
-
-				// Post-process: ensure weapon and tier metadata are filled when possible
-				this.skins = this.skins.map((s) => {
-					// Fill weapon from reverse map when missing
-					if ((!s.weapon || s.weapon === '') && s.uuid) {
-						const fromMap = this.skinToWeaponBySkinId[s.uuid]
-						if (fromMap) s.weapon = fromMap
-					}
-
-					// Fill tier meta from contentTierById when absent
-					if ((s.tier === null || !s.tier?.name) && s.tier_id) {
-						const tierMeta = this.contentTierById[s.tier_id]
-						if (tierMeta) s.tier = { name: tierMeta.name, image_url: tierMeta.image_url }
-					}
-
-					return s
-				})
+				console.log('[fetchSkins] Fetch complete (post-processing done inline)')
 			} catch (error) {
 				console.error('Failed to fetch skins', error)
 				this.skins = []
+			} finally {
+				this.loading = false
 			}
 		},
 		async fetchContentTiers(): Promise<void> {
@@ -217,40 +209,95 @@ export const useSkinsStore = defineStore('skins', {
 		async fetchSkinsFromApi(): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
-				const BACKEND_FETCH_SIZE = runtime.public?.backendFetchSize ?? 500
 				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
 
-				const url = `${BACKEND_BASE_URL}/api/v1/skins?perPage=${BACKEND_FETCH_SIZE}&page=1`
-				const res = await $fetch<{ data?: BackendSkin[] }>(url)
-				const items = Array.isArray(res?.data) ? res.data : []
-				console.debug('fetchSkinsFromApi: backend returned items=', items.length)
-				this.skins = items.map((it: BackendSkin, idx: number): Skin => {
-					return {
-						id: idx,
-						uuid: it.uuid ?? '',
-						name: it.name ?? 'Unknown',
-						image_url: it.image_url ?? it.image ?? '',
-						weapon: it.weapon ?? '',
-						collection: it.collection ?? '',
-						tier: it.tier ?? null,
-						tier_id: it.tier_id ?? '',
-						levels: (it.levels ?? []).map((lv: SkinLevel) => ({
-							uuid: lv.uuid,
-							displayName: lv.displayName ?? null,
-							displayIcon: lv.displayIcon ?? null,
-							streamedVideo: lv.streamedVideo ?? null,
-							levelItem: lv.levelItem ?? null
-						})),
-						chromas: (it.chromas ?? []).map((ch: SkinChroma) => ({
-							uuid: ch.uuid,
-							displayName: ch.displayName ?? null,
-							displayIcon: ch.displayIcon ?? null,
-							fullRender: ch.fullRender ?? null,
-							swatch: ch.swatch ?? null,
-							streamedVideo: ch.streamedVideo ?? null
-						}))
+				// Fetch and display in batches for better UX
+				const BATCH_SIZE = 300
+				let allTransformed: Skin[] = []
+				let page = 1
+				let hasMore = true
+				let globalIndex = 0
+
+				while (hasMore) {
+					const url = `${BACKEND_BASE_URL}/api/v1/skins?perPage=${BATCH_SIZE}&page=${page}`
+					console.log(`[fetchSkinsFromApi] Fetching batch ${page} from:`, url)
+					const res = await $fetch<{
+						data?: BackendSkin[]
+						meta?: { total: number; page: number; perPage: number; totalPages: number }
+					}>(url)
+					console.log(`[fetchSkinsFromApi] Batch ${page} response received`)
+
+					const items = Array.isArray(res?.data) ? res.data : []
+
+					// Transform this batch and do post-processing immediately
+					console.log(`[fetchSkinsFromApi] Transforming batch ${page} (${items.length} items)...`)
+					const batchTransformed: Skin[] = []
+					for (let i = 0; i < items.length; i++) {
+						const it = items[i]
+						if (!it) continue
+
+						const skinUuid = it.uuid ?? ''
+						let weapon = it.weapon ?? ''
+						let tier = it.tier ?? null
+						const tierId = it.tier_id ?? ''
+
+						// Fill weapon from reverse map when missing (post-processing inline)
+						if (!weapon && skinUuid) {
+							const fromMap = this.skinToWeaponBySkinId[skinUuid]
+							if (fromMap) weapon = fromMap
+						}
+
+						// Fill tier meta from contentTierById when absent (post-processing inline)
+						if ((!tier || !tier?.name) && tierId) {
+							const tierMeta = this.contentTierById[tierId]
+							if (tierMeta) tier = { name: tierMeta.name, image_url: tierMeta.image_url }
+						}
+
+						batchTransformed.push({
+							id: globalIndex++,
+							uuid: skinUuid,
+							name: it.name ?? 'Unknown',
+							image_url: it.image_url ?? it.image ?? '',
+							weapon: weapon,
+							collection: it.collection ?? '',
+							tier: tier,
+							tier_id: tierId,
+							levels: (it.levels ?? []).map((lv: SkinLevel) => ({
+								uuid: lv.uuid,
+								displayName: lv.displayName ?? null,
+								displayIcon: lv.displayIcon ?? null,
+								streamedVideo: lv.streamedVideo ?? null,
+								levelItem: lv.levelItem ?? null
+							})),
+							chromas: (it.chromas ?? []).map((ch: SkinChroma) => ({
+								uuid: ch.uuid,
+								displayName: ch.displayName ?? null,
+								displayIcon: ch.displayIcon ?? null,
+								fullRender: ch.fullRender ?? null,
+								swatch: ch.swatch ?? null,
+								streamedVideo: ch.streamedVideo ?? null
+							}))
+						})
 					}
-				})
+
+					// Add to accumulated results
+					allTransformed = allTransformed.concat(batchTransformed)
+
+					// Update UI with current batch (progressive loading)
+					console.log(`[fetchSkinsFromApi] Updating UI with ${allTransformed.length} total skins...`)
+					this.skins = allTransformed
+					console.log(`[fetchSkinsFromApi] UI updated`)
+
+					// Check if there are more pages
+					const meta = res?.meta
+					if (meta && meta.page < meta.totalPages) {
+						page++
+					} else {
+						hasMore = false
+					}
+				}
+
+				console.log('[fetchSkinsFromApi] All batches loaded. Total:', allTransformed.length)
 			} catch (error) {
 				console.error('Failed to fetch skins from API', error)
 			}

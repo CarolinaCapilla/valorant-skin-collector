@@ -113,7 +113,9 @@
 						</div>
 					</div>
 
-					<!-- Actions: remove from collection -->
+					<!-- Actions: -->
+					<!-- :class="['mt-3 w-full', owned ? 'btn-sweep-inverse' : 'btn-sweep']" -->
+
 					<div class="flex items-center justify-center">
 						<UButton
 							v-if="isOwned"
@@ -143,7 +145,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Skin } from '~/data/skin'
+import type { Skin } from '~/types/skin'
 import { computed, ref, watch } from 'vue'
 import { useSkinsStore } from '~/stores/skins'
 

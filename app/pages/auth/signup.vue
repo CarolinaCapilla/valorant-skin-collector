@@ -8,7 +8,7 @@
 		@submit="onSubmit"
 	>
 		<template #description>
-			Already have an account? <ULink to="/login" class="text-primary font-medium">Login</ULink>.
+			Already have an account? <ULink to="/auth/login" class="text-primary font-medium">Login</ULink>.
 		</template>
 
 		<template #footer>
@@ -21,6 +21,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({
 	layout: 'auth'
@@ -31,7 +32,9 @@ useSeoMeta({
 	description: 'Create an account to get started'
 })
 
-const toast = useToast()
+const notify = useNotification()
+const router = useRouter()
+const authStore = useAuthStore()
 
 const fields = [
 	{
@@ -51,6 +54,12 @@ const fields = [
 		label: 'Password',
 		type: 'password' as const,
 		placeholder: 'Enter your password'
+	},
+	{
+		name: 'password_confirmation',
+		label: 'Confirm Password',
+		type: 'password' as const,
+		placeholder: 'Confirm your password'
 	}
 ]
 
@@ -59,14 +68,14 @@ const providers = [
 		label: 'Google',
 		icon: 'i-simple-icons-google',
 		onClick: () => {
-			toast.add({ title: 'Google', description: 'Login with Google' })
+			authStore.redirectToOAuthProvider('google')
 		}
 	},
 	{
 		label: 'GitHub',
 		icon: 'i-simple-icons-github',
 		onClick: () => {
-			toast.add({ title: 'GitHub', description: 'Login with GitHub' })
+			authStore.redirectToOAuthProvider('github')
 		}
 	}
 ]
@@ -74,12 +83,32 @@ const providers = [
 const schema = z.object({
 	name: z.string().min(1, 'Name is required'),
 	email: z.string().email('Invalid email'),
-	password: z.string().min(8, 'Must be at least 8 characters')
+	password: z.string().min(8, 'Must be at least 8 characters'),
+	password_confirmation: z.string().min(8, 'Must be at least 8 characters')
 })
 
 type Schema = z.output<typeof schema>
 
-function onSubmit(payload: FormSubmitEvent<Schema>) {
-	console.log('Submitted', payload)
+async function onSubmit(payload: FormSubmitEvent<Schema>) {
+	try {
+		await authStore.register({
+			name: payload.data.name,
+			email: payload.data.email,
+			password: payload.data.password,
+			password_confirmation: payload.data.password_confirmation
+		})
+
+		notify.success('Success', 'Registered successfully')
+
+		// Redirect to home or dashboard
+		router.push('/')
+	} catch (error) {
+		const errorMessage =
+			error && typeof error === 'object' && 'data' in error
+				? (error.data as { message?: string })?.message
+				: 'Login failed. Please check your credentials.'
+
+		notify.error('Error', errorMessage)
+	}
 }
 </script>

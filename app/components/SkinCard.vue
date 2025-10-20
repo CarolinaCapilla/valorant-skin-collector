@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Skin } from '~/data/skin'
+import type { Skin } from '~/types/skin'
 import { onMounted } from 'vue'
 
 const { $anime } = useNuxtApp()

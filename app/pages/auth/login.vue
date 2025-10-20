@@ -8,7 +8,7 @@
 		@submit="onSubmit"
 	>
 		<template #description>
-			Don't have an account? <ULink to="/signup" class="text-primary font-medium">Sign up</ULink>.
+			Don't have an account? <ULink to="/auth/signup" class="text-primary font-medium">Sign up</ULink>.
 		</template>
 
 		<template #password-hint>
@@ -25,6 +25,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({
 	layout: 'auth'
@@ -35,7 +36,9 @@ useSeoMeta({
 	description: 'Login to your account to continue'
 })
 
-const toast = useToast()
+const notify = useNotification()
+const router = useRouter()
+const authStore = useAuthStore()
 
 const fields = [
 	{
@@ -63,26 +66,45 @@ const providers = [
 		label: 'Google',
 		icon: 'i-simple-icons-google',
 		onClick: () => {
-			toast.add({ title: 'Google', description: 'Login with Google' })
+			authStore.redirectToOAuthProvider('google')
 		}
 	},
 	{
 		label: 'GitHub',
 		icon: 'i-simple-icons-github',
 		onClick: () => {
-			toast.add({ title: 'GitHub', description: 'Login with GitHub' })
+			authStore.redirectToOAuthProvider('github')
 		}
 	}
 ]
 
 const schema = z.object({
 	email: z.string().email('Invalid email'),
-	password: z.string().min(8, 'Must be at least 8 characters')
+	password: z.string().min(8, 'Must be at least 8 characters'),
+	remember: z.boolean().optional()
 })
 
 type Schema = z.output<typeof schema>
 
-function onSubmit(payload: FormSubmitEvent<Schema>) {
-	console.log('Submitted', payload)
+async function onSubmit(payload: FormSubmitEvent<Schema>) {
+	try {
+		await authStore.login({
+			email: payload.data.email,
+			password: payload.data.password,
+			remember: payload.data.remember
+		})
+
+		notify.success('Success', 'Logged in successfully')
+
+		// Redirect to home or dashboard
+		router.push('/')
+	} catch (error) {
+		const errorMessage =
+			error && typeof error === 'object' && 'data' in error
+				? (error.data as { message?: string })?.message
+				: 'Login failed. Please check your credentials.'
+
+		notify.error('Error', errorMessage)
+	}
 }
 </script>

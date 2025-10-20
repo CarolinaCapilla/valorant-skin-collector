@@ -128,8 +128,8 @@
 
 <script setup lang="ts">
 import { useSkinsStore } from '~/stores/skins'
-import type { ValorantWeapon } from '~/data/api'
-import type { Skin } from '~/data/skin'
+import type { ValorantWeapon } from '~/types/api'
+import type { Skin } from '~/types/skin'
 
 const store = useSkinsStore()
 const isDev = import.meta.dev

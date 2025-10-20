@@ -1,7 +1,15 @@
 <template>
 	<div>
 		<FilterBar />
-		<div v-if="total > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 px-9">
+
+		<!-- Loading state -->
+		<div v-if="store.loading" class="py-12 flex flex-col items-center justify-center gap-3">
+			<UIcon name="i-lucide-loader-circle" class="h-10 w-10 animate-spin text-neutral-400" />
+			<p class="text-sm text-neutral-400">Loading skins...</p>
+		</div>
+
+		<!-- Skins grid -->
+		<div v-else-if="total > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 px-9">
 			<div v-for="skin in paginatedSkins" :key="skin.id" class="flex flex-col">
 				<div
 					role="button"
@@ -47,13 +55,11 @@
 <script setup lang="ts">
 import { useSkinsStore } from '~/stores/skins'
 import SkinModal from '~/components/SkinModal.vue'
-import type { Skin } from '~/data/skin'
+import type { Skin } from '~/types/skin'
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 
 const store = useSkinsStore()
-
-// (dev fetch button removed from template; no dev helpers required)
 
 await callOnce('content-tiers', () => store.fetchContentTiers())
 

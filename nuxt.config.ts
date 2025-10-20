@@ -13,7 +13,6 @@ export default defineNuxtConfig({
 	},
 	runtimeConfig: {
 		public: {
-			backendFetchSize: 300,
 			backendBaseUrl: 'http://localhost:8000'
 		}
 	},
