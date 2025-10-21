@@ -132,13 +132,9 @@ await Promise.all([
 
 // Wait a tick to ensure reactive state is updated
 await nextTick()
-
-// Fetch user's wishlist from backend - ALWAYS fetch (don't use callOnce)
-// User data should be fresh on every page load
 await store.fetchUserWishlist()
 
 const wishlistCount = computed(() => store.wishlist.length)
-
 // helper: normalize API categories to nice labels + order
 const categoryLabel = (raw?: string) => {
 	switch (raw) {

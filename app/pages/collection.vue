@@ -144,9 +144,6 @@ await Promise.all([
 
 // Wait a tick to ensure reactive state is updated
 await nextTick()
-
-// Fetch user's collection from backend - ALWAYS fetch (don't use callOnce)
-// User data should be fresh on every page load
 await store.fetchUserCollection()
 
 const ownedCount = computed(() => store.owned.length)
