@@ -57,3 +57,7 @@ npm run preview
 ### Disclaimer
 
 Valorant is a trademark of Riot Games. This project is for educational/personal use and is not endorsed by or affiliated with Riot Games.
+
+© 2025 Carolina Moreno Capilla
+Licensed under the Non-Commercial Software License (NCSL).
+Commercial use is prohibited without prior written permission.
