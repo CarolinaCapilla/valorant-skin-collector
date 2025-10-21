@@ -32,18 +32,18 @@
 					icon="i-lucide-log-out"
 					color="neutral"
 					variant="ghost"
-					@click="handleLogout"
 					class="lg:hidden"
 					:loading="loggingOut"
+					@click="handleLogout"
 				/>
 				<UButton
 					label="Logout"
 					icon="i-lucide-log-out"
 					color="neutral"
 					variant="outline"
-					@click="handleLogout"
 					class="hidden lg:inline-flex"
 					:loading="loggingOut"
+					@click="handleLogout"
 				/>
 			</template>
 
@@ -96,7 +96,14 @@
 
 			<!-- Mobile menu - Unauthenticated -->
 			<template v-else>
-				<UButton label="Sign in" color="neutral" variant="subtle" to="/auth/login" block class="mb-3" />
+				<UButton
+					label="Sign in"
+					color="neutral"
+					variant="subtle"
+					to="/auth/login"
+					block
+					class="mb-3"
+				/>
 				<UButton label="Sign up" color="neutral" to="/auth/signup" block />
 			</template>
 		</template>
@@ -112,12 +119,22 @@ const router = useRouter()
 const notify = useNotification()
 const loggingOut = ref(false)
 
-const items = computed(() => [
-	{ label: 'Home', to: '/' },
-	{ label: 'Skins', to: '/skins' },
-	{ label: 'Collection', to: '/collection' },
-	{ label: 'Wishlist (Coming Soon)', to: '/wishlist', disabled: true }
-])
+const items = computed(() => {
+	const baseItems = [
+		{ label: 'Home', to: '/' },
+		{ label: 'Skins', to: '/skins' }
+	]
+
+	// Only show Collection and Wishlist if user is logged in
+	if (authStore.isLoggedIn) {
+		baseItems.push(
+			{ label: 'Collection', to: '/collection' },
+			{ label: 'Wishlist', to: '/wishlist' }
+		)
+	}
+
+	return baseItems
+})
 
 async function handleLogout() {
 	try {

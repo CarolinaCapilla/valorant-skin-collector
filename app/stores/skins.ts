@@ -8,14 +8,17 @@ import type {
 	ValorantWeapon,
 	BackendSkin
 } from '~/types/api'
-// NOTE: Do not call composables like `useRuntimeConfig()` at module top-level.
-// We'll read runtime config inside actions where Vue/Nuxt setup context is available.
+
+// Map of skin UUID to favorite chroma UUID
+type FavoriteChromaMap = Record<string, string | undefined>
 
 export const useSkinsStore = defineStore('skins', {
 	state: () => ({
 		skins: [] as Skin[],
 		owned: [] as Skin[],
 		wishlist: [] as Skin[],
+		ownedFavoriteChromas: {} as FavoriteChromaMap,
+		wishlistFavoriteChromas: {} as FavoriteChromaMap,
 		loading: false,
 		// filter selections (UUIDs)
 		filters: {
@@ -41,7 +44,6 @@ export const useSkinsStore = defineStore('skins', {
 		wishlistCount(): number {
 			return this.wishlist.length
 		},
-		// value/label pairs with UUIDs for filtering
 		collectionDictionary(): Array<{ value: string; label: string }> {
 			return Object.keys(this.skinCollectionById)
 				.map((uuid) => ({ value: uuid, label: this.skinCollectionById[uuid] ?? 'Unknown' }))
@@ -61,53 +63,35 @@ export const useSkinsStore = defineStore('skins', {
 				.sort((a, b) => a.label.localeCompare(b.label))
 		},
 		filteredSkins(): Skin[] {
-			console.log('[filteredSkins] Computing filtered skins...')
-			const weapon = this.filters.weapon
-			const collection = this.filters.collection
-			const tier = this.filters.tier
-			const query = this.filters.search.toLowerCase().trim()
-
-			const result = this.skins.filter((s) => {
-				if (weapon && s.weapon !== weapon) return false
-				if (collection && s.collection !== collection) return false
-				if (tier && s.tier_id !== tier) return false
-				if (query && !s.name.toLowerCase().includes(query)) return false
-				return true
-			})
-			console.log('[filteredSkins] Filtered result count:', result.length)
-			return result
+			return this._applyFilters(this.skins)
 		},
 		filteredOwned(): Skin[] {
-			const weapon = this.filters.weapon
-			const collection = this.filters.collection
-			const tier = this.filters.tier
-			const query = this.filters.search.toLowerCase().trim()
-
-			return this.owned.filter((s) => {
-				if (weapon && s.weapon !== weapon) return false
-				if (collection && s.collection !== collection) return false
-				if (tier && s.tier_id !== tier) return false
-				if (query && !s.name.toLowerCase().includes(query)) return false
-				return true
-			})
+			return this._applyFilters(this.owned)
 		},
 		filteredWishlist(): Skin[] {
-			const weapon = this.filters.weapon
-			const collection = this.filters.collection
-			const tier = this.filters.tier
-			const query = this.filters.search.toLowerCase().trim()
+			return this._applyFilters(this.wishlist)
+		},
+		_applyFilters(): (skins: Skin[]) => Skin[] {
+			const { weapon, collection, tier, search } = this.filters
+			const query = search.toLowerCase().trim()
 
-			return this.wishlist.filter((s) => {
-				if (weapon && s.weapon !== weapon) return false
-				if (collection && s.collection !== collection) return false
-				if (tier && s.tier_id !== tier) return false
-				if (query && !s.name.toLowerCase().includes(query)) return false
-				return true
-			})
+			return (skins: Skin[]) =>
+				skins.filter((s) => {
+					if (weapon && s.weapon !== weapon) return false
+					if (collection && s.collection !== collection) return false
+					if (tier && s.tier_id !== tier) return false
+					if (query && !s.name.toLowerCase().includes(query)) return false
+					return true
+				})
 		}
 	},
 
 	actions: {
+		_getBackendUrl(): string {
+			const runtime = useRuntimeConfig()
+			return runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+		},
+
 		addOwned(skin: Skin) {
 			if (!this.owned.find((s) => s.id === skin.id)) this.owned.push(skin)
 		},
@@ -123,9 +107,7 @@ export const useSkinsStore = defineStore('skins', {
 		async fetchSkins(): Promise<void> {
 			try {
 				this.loading = true
-				console.log('[fetchSkins] Starting fetch...')
 				await this.fetchSkinsFromApi()
-				console.log('[fetchSkins] Fetch complete (post-processing done inline)')
 			} catch (error) {
 				console.error('Failed to fetch skins', error)
 				this.skins = []
@@ -220,17 +202,14 @@ export const useSkinsStore = defineStore('skins', {
 
 				while (hasMore) {
 					const url = `${BACKEND_BASE_URL}/api/v1/skins?perPage=${BATCH_SIZE}&page=${page}`
-					console.log(`[fetchSkinsFromApi] Fetching batch ${page} from:`, url)
 					const res = await $fetch<{
 						data?: BackendSkin[]
 						meta?: { total: number; page: number; perPage: number; totalPages: number }
 					}>(url)
-					console.log(`[fetchSkinsFromApi] Batch ${page} response received`)
 
 					const items = Array.isArray(res?.data) ? res.data : []
 
 					// Transform this batch and do post-processing immediately
-					console.log(`[fetchSkinsFromApi] Transforming batch ${page} (${items.length} items)...`)
 					const batchTransformed: Skin[] = []
 					for (let i = 0; i < items.length; i++) {
 						const it = items[i]
@@ -282,12 +261,8 @@ export const useSkinsStore = defineStore('skins', {
 
 					// Add to accumulated results
 					allTransformed = allTransformed.concat(batchTransformed)
-
 					// Update UI with current batch (progressive loading)
-					console.log(`[fetchSkinsFromApi] Updating UI with ${allTransformed.length} total skins...`)
 					this.skins = allTransformed
-					console.log(`[fetchSkinsFromApi] UI updated`)
-
 					// Check if there are more pages
 					const meta = res?.meta
 					if (meta && meta.page < meta.totalPages) {
@@ -296,8 +271,6 @@ export const useSkinsStore = defineStore('skins', {
 						hasMore = false
 					}
 				}
-
-				console.log('[fetchSkinsFromApi] All batches loaded. Total:', allTransformed.length)
 			} catch (error) {
 				console.error('Failed to fetch skins from API', error)
 			}
@@ -308,6 +281,204 @@ export const useSkinsStore = defineStore('skins', {
 			this.filters.collection = ''
 			this.filters.tier = ''
 			this.filters.search = ''
+		},
+
+		/**
+		 * Fetch user's collection from backend
+		 */
+		async fetchUserCollection(): Promise<void> {
+			try {
+				const runtime = useRuntimeConfig()
+				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+
+				const res = await $fetch<{
+					data?: Array<{
+						skin_uuid: string
+						metadata?: { favorite_chroma_uuid?: string } | null
+					}>
+				}>(`${BACKEND_BASE_URL}/api/v1/user/collection`, { credentials: 'include' })
+
+				const userSkins = res?.data || []
+
+				// Map backend skin_uuids to our Skin objects
+				this.owned = this.skins.filter((skin) => userSkins.some((us) => us.skin_uuid === skin.uuid))
+
+				// Extract favorite chromas
+				this.ownedFavoriteChromas = {}
+				userSkins.forEach((us) => {
+					if (us.metadata?.favorite_chroma_uuid) {
+						this.ownedFavoriteChromas[us.skin_uuid] = us.metadata.favorite_chroma_uuid
+					}
+				})
+			} catch (error) {
+				console.error('Failed to fetch user collection', error)
+				this.owned = []
+				this.ownedFavoriteChromas = {}
+			}
+		},
+
+		/**
+		 * Add skin to user's collection
+		 */
+		async addSkinToCollection(skinUuid: string, favoriteChromaUuid?: string): Promise<void> {
+			try {
+				const runtime = useRuntimeConfig()
+				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+
+				const body: {
+					skin_uuid: string
+					owned: boolean
+					favorite_chroma_uuid?: string
+				} = {
+					skin_uuid: skinUuid,
+					owned: true
+				}
+
+				if (favoriteChromaUuid) {
+					body.favorite_chroma_uuid = favoriteChromaUuid
+				}
+
+				await $fetch(`${BACKEND_BASE_URL}/api/v1/user/collection`, {
+					method: 'POST',
+					body,
+					credentials: 'include'
+				})
+
+				// Update local state
+				const skin = this.skins.find((s) => s.uuid === skinUuid)
+				if (skin && !this.owned.find((s) => s.uuid === skinUuid)) {
+					this.owned.push(skin)
+				}
+
+				// Update favorite chroma if provided
+				if (favoriteChromaUuid) {
+					this.ownedFavoriteChromas[skinUuid] = favoriteChromaUuid
+				}
+			} catch (error) {
+				console.error('Failed to add skin to collection', error)
+				throw error
+			}
+		},
+
+		/**
+		 * Remove skin from user's collection
+		 */
+		async removeSkinFromCollection(skinUuid: string): Promise<void> {
+			try {
+				const runtime = useRuntimeConfig()
+				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+
+				const url = `${BACKEND_BASE_URL}/api/v1/user/collection/skin`
+
+				await $fetch(url, {
+					method: 'DELETE',
+					credentials: 'include',
+					query: {
+						skin_uuid: skinUuid
+					}
+				})
+
+				// Update local state
+				this.owned = this.owned.filter((s) => s.uuid !== skinUuid)
+			} catch (error) {
+				console.error('Failed to remove skin from collection', error)
+				throw error
+			}
+		},
+
+		/**
+		 * Fetch user's wishlist from backend
+		 */
+		async fetchUserWishlist(): Promise<void> {
+			try {
+				const runtime = useRuntimeConfig()
+				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+
+				const res = await $fetch<{
+					data?: Array<{
+						skin_uuid: string
+						metadata?: { favorite_chroma_uuid?: string } | null
+					}>
+				}>(`${BACKEND_BASE_URL}/api/v1/user/collection?wishlist=1`, { credentials: 'include' })
+
+				const wishlistSkins = res?.data || []
+
+				// Map backend skin_uuids to our Skin objects
+				this.wishlist = this.skins.filter((skin) =>
+					wishlistSkins.some((ws) => ws.skin_uuid === skin.uuid)
+				)
+
+				// Extract favorite chromas
+				this.wishlistFavoriteChromas = {}
+				wishlistSkins.forEach((ws) => {
+					if (ws.metadata?.favorite_chroma_uuid) {
+						this.wishlistFavoriteChromas[ws.skin_uuid] = ws.metadata.favorite_chroma_uuid
+					}
+				})
+			} catch (error) {
+				console.error('Failed to fetch user wishlist', error)
+				this.wishlist = []
+				this.wishlistFavoriteChromas = {}
+			}
+		},
+
+		/**
+		 * Add skin to user's wishlist
+		 */
+		async addSkinToWishlist(skinUuid: string, favoriteChromaUuid?: string): Promise<void> {
+			try {
+				const runtime = useRuntimeConfig()
+				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+
+				await $fetch(`${BACKEND_BASE_URL}/api/v1/user/wishlist`, {
+					method: 'POST',
+					body: {
+						skin_uuid: skinUuid,
+						favorite_chroma_uuid: favoriteChromaUuid || undefined
+					},
+					credentials: 'include'
+				})
+
+				// Update local state
+				const skin = this.skins.find((s) => s.uuid === skinUuid)
+				if (skin && !this.wishlist.find((s) => s.uuid === skinUuid)) {
+					this.wishlist.push(skin)
+				}
+
+				// Update favorite chroma if provided
+				if (favoriteChromaUuid) {
+					this.wishlistFavoriteChromas[skinUuid] = favoriteChromaUuid
+				}
+			} catch (error) {
+				console.error('Failed to add skin to wishlist', error)
+				throw error
+			}
+		},
+
+		/**
+		 * Remove skin from user's wishlist
+		 */
+		async removeSkinFromWishlist(skinUuid: string): Promise<void> {
+			try {
+				const runtime = useRuntimeConfig()
+				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+
+				const url = `${BACKEND_BASE_URL}/api/v1/user/wishlist/skin`
+
+				await $fetch(url, {
+					method: 'DELETE',
+					credentials: 'include',
+					query: {
+						skin_uuid: skinUuid
+					}
+				})
+
+				// Update local state
+				this.wishlist = this.wishlist.filter((s) => s.uuid !== skinUuid)
+			} catch (error) {
+				console.error('Failed to remove skin from wishlist', error)
+				throw error
+			}
 		}
 	}
 })

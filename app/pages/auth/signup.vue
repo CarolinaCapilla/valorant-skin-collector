@@ -8,7 +8,8 @@
 		@submit="onSubmit"
 	>
 		<template #description>
-			Already have an account? <ULink to="/auth/login" class="text-primary font-medium">Login</ULink>.
+			Already have an account?
+			<ULink to="/auth/login" class="text-primary font-medium">Login</ULink>.
 		</template>
 
 		<template #footer>

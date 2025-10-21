@@ -48,22 +48,28 @@
 							</UButton>
 						</div>
 						<div class="flex items-center gap-2">
-							<UButton
-								v-for="(ch, cidx) in filteredChromas"
-								:key="ch.uuid || cidx"
-								variant="ghost"
-								color="neutral"
-								size="xs"
-								class="h-8 w-8 p-0 rounded shadow-inner border !bg-cover !bg-center"
-								:class="
-									cidx === chromaIndex
-										? 'border-primary-500 ring-1 ring-primary-500'
-										: 'border-neutral-700'
-								"
-								:style="{ backgroundImage: `url(${ch.swatch})` }"
-								:aria-label="ch.displayName || 'Chroma'"
-								@click="setChroma(cidx)"
-							/>
+							<div v-for="(ch, cidx) in filteredChromas" :key="ch.uuid || cidx" class="relative">
+								<UButton
+									variant="ghost"
+									color="neutral"
+									size="xs"
+									class="h-8 w-8 p-0 rounded shadow-inner border !bg-cover !bg-center"
+									:class="
+										cidx === chromaIndex
+											? 'border-primary-500 ring-1 ring-primary-500'
+											: 'border-neutral-700'
+									"
+									:style="{ backgroundImage: `url(${ch.swatch})` }"
+									:aria-label="ch.displayName || 'Chroma'"
+									@click="setChroma(cidx)"
+								/>
+								<!-- Star indicator for favorite chroma -->
+								<UIcon
+									v-if="isFavoriteChroma(ch.uuid)"
+									name="i-lucide-star"
+									class="absolute -top-1 -right-1 h-3 w-3 text-yellow-400 fill-yellow-400 drop-shadow-md"
+								/>
+							</div>
 						</div>
 					</div>
 
@@ -114,14 +120,12 @@
 					</div>
 
 					<!-- Actions: -->
-					<!-- :class="['mt-3 w-full', owned ? 'btn-sweep-inverse' : 'btn-sweep']" -->
-
-					<div class="flex items-center justify-center">
+					<div class="flex items-center justify-center gap-3">
 						<UButton
 							v-if="isOwned"
 							size="sm"
-							color="error"
 							variant="outline"
+							class="btn-sweep"
 							@click="removeFromCollection"
 						>
 							Remove from collection
@@ -129,11 +133,30 @@
 						<UButton
 							v-if="!isOwned"
 							size="sm"
-							color="error"
 							variant="outline"
+							class="btn-sweep"
 							@click="addToCollection"
 						>
 							Add to collection
+						</UButton>
+
+						<UButton
+							v-if="isInWishlist"
+							size="sm"
+							variant="outline"
+							class="btn-sweep"
+							@click="removeFromWishlist"
+						>
+							Remove from wishlist
+						</UButton>
+						<UButton
+							v-if="!isInWishlist"
+							size="sm"
+							variant="outline"
+							class="btn-sweep"
+							@click="addToWishlist"
+						>
+							Add to wishlist
 						</UButton>
 					</div>
 				</div>
@@ -150,6 +173,7 @@ import { computed, ref, watch } from 'vue'
 import { useSkinsStore } from '~/stores/skins'
 
 const store = useSkinsStore()
+const notify = useNotification()
 
 const props = defineProps<{
 	open: boolean
@@ -206,7 +230,24 @@ watch(filteredChromas, (list) => {
 	if (chromaIndex.value >= list.length) chromaIndex.value = 0
 })
 
-watch(currentSkin, () => {
+watch(currentSkin, (skin) => {
+	// Check if this skin has a favorite chroma
+	if (skin?.uuid) {
+		const favoriteChromaUuid =
+			store.ownedFavoriteChromas[skin.uuid] || store.wishlistFavoriteChromas[skin.uuid]
+
+		if (favoriteChromaUuid && skin.chromas) {
+			// Find the index of the favorite chroma
+			const favoriteIndex = skin.chromas.findIndex((c) => c.uuid === favoriteChromaUuid)
+			if (favoriteIndex !== -1) {
+				chromaIndex.value = favoriteIndex
+				levelIndex.value = 0
+				return
+			}
+		}
+	}
+
+	// Default: show first chroma
 	chromaIndex.value = 0
 	levelIndex.value = 0
 })
@@ -238,31 +279,98 @@ const isOwned = computed(() => {
 	return store.owned.some((s) => s.uuid === baseUuid)
 })
 
-function addToCollection() {
-	if (!currentSkin.value) return
+async function addToCollection() {
+	if (!currentSkin.value?.uuid) return
 	const baseUuid = currentSkin.value.uuid
-	if (!baseUuid) return
 
-	const found = store.owned.find((s) => s.uuid === baseUuid)
-	if (found) return
-	store.addOwned(currentSkin.value)
-	// close modal
-	openProxy.value = false
+	if (store.owned.find((s) => s.uuid === baseUuid)) return
+
+	try {
+		// Pass the currently selected chroma as favorite
+		const favoriteChromaUuid = activeChroma.value?.uuid
+		await store.addSkinToCollection(baseUuid, favoriteChromaUuid)
+		notify.success('Skin added to your collection.')
+		openProxy.value = false
+	} catch {
+		notify.error('Failed to add skin to collection.')
+	}
 }
 
-function removeFromCollection() {
-	if (!currentSkin.value) return
-	const baseUuid = currentSkin.value.uuid
-	if (!baseUuid) return
+async function removeFromCollection() {
+	if (!currentSkin.value?.uuid) return
 
-	const found = store.owned.find((s) => s.uuid === baseUuid)
-	if (!found) return
-	store.removeOwned(found.id)
-	// close modal
-	openProxy.value = false
+	const baseUuid = currentSkin.value.uuid
+
+	if (!store.owned.find((s) => s.uuid === baseUuid)) {
+		notify.error('Skin not found in your collection.')
+		return
+	}
+
+	try {
+		await store.removeSkinFromCollection(baseUuid)
+		// Also clear favorite chroma when removing
+		store.ownedFavoriteChromas[baseUuid] = undefined
+		notify.success('Skin removed from your collection.')
+		openProxy.value = false
+	} catch {
+		notify.error('Failed to remove skin from collection.')
+	}
 }
 
 const isDefaultChromaSelected = computed(() => chromaIndex.value === 0)
+
+// Check if a chroma is the favorite
+function isFavoriteChroma(chromaUuid?: string | null): boolean {
+	if (!chromaUuid || !currentSkin.value?.uuid) return false
+	const skinUuid = currentSkin.value.uuid
+	const favoriteChromaUuid =
+		store.ownedFavoriteChromas[skinUuid] || store.wishlistFavoriteChromas[skinUuid]
+	return favoriteChromaUuid === chromaUuid
+}
+
+// Wishlist functionality
+const isInWishlist = computed(() => {
+	const baseUuid = currentSkin.value?.uuid
+	if (!baseUuid) return false
+	return store.wishlist.some((s) => s.uuid === baseUuid)
+})
+
+async function addToWishlist() {
+	if (!currentSkin.value?.uuid) return
+	const baseUuid = currentSkin.value.uuid
+
+	if (store.wishlist.find((s) => s.uuid === baseUuid)) return
+
+	try {
+		// Pass the currently selected chroma as favorite
+		const favoriteChromaUuid = activeChroma.value?.uuid
+		await store.addSkinToWishlist(baseUuid, favoriteChromaUuid)
+		notify.success('Skin added to your wishlist.')
+		openProxy.value = false
+	} catch {
+		notify.error('Failed to add skin to wishlist.')
+	}
+}
+
+async function removeFromWishlist() {
+	if (!currentSkin.value?.uuid) return
+	const baseUuid = currentSkin.value.uuid
+
+	if (!store.wishlist.find((s) => s.uuid === baseUuid)) {
+		notify.error('Skin not found in your wishlist.')
+		return
+	}
+
+	try {
+		await store.removeSkinFromWishlist(baseUuid)
+		// Also clear favorite chroma when removing
+		store.wishlistFavoriteChromas[baseUuid] = undefined
+		notify.success('Skin removed from your wishlist.')
+		openProxy.value = false
+	} catch {
+		notify.error('Failed to remove skin from wishlist.')
+	}
+}
 
 function roman(n: number): string {
 	// Only levels 1-4 are possible; map directly

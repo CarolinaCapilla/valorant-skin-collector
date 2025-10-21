@@ -8,7 +8,8 @@
 		@submit="onSubmit"
 	>
 		<template #description>
-			Don't have an account? <ULink to="/auth/signup" class="text-primary font-medium">Sign up</ULink>.
+			Don't have an account?
+			<ULink to="/auth/signup" class="text-primary font-medium">Sign up</ULink>.
 		</template>
 
 		<template #password-hint>

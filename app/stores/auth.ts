@@ -145,12 +145,7 @@ export const useAuthStore = defineStore('auth', {
 			const runtime = useRuntimeConfig()
 			const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
 
-			console.log('[Auth Store] Redirecting to OAuth provider:', provider)
-			console.log('[Auth Store] Backend URL:', BACKEND_BASE_URL)
-
 			const redirectUrl = `${BACKEND_BASE_URL}/auth/${provider}/redirect`
-			console.log('[Auth Store] Full redirect URL:', redirectUrl)
-
 			// Redirect to Laravel backend OAuth route
 			window.location.href = redirectUrl
 		},

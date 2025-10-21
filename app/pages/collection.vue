@@ -102,7 +102,7 @@
 							</div>
 						</div>
 
-						<!-- Manage link -->
+						<!-- Actions -->
 						<div class="mt-3 flex items-center justify-end gap-3">
 							<UButton size="xs" color="primary" variant="outline" @click="openModal(weapon.uuid)">
 								View
@@ -138,9 +138,16 @@ const isDev = import.meta.dev
 await callOnce('collection:content-tiers', () => store.fetchContentTiers())
 await Promise.all([
 	callOnce('collection:skin-collections', () => store.fetchSkinCollections()),
-	callOnce('collection:weapons', () => store.fetchWeapons())
+	callOnce('collection:weapons', () => store.fetchWeapons()),
+	callOnce('collection:skins', () => store.fetchSkins())
 ])
-await callOnce('collection:skins', () => store.fetchSkins())
+
+// Wait a tick to ensure reactive state is updated
+await nextTick()
+
+// Fetch user's collection from backend - ALWAYS fetch (don't use callOnce)
+// User data should be fresh on every page load
+await store.fetchUserCollection()
 
 const ownedCount = computed(() => store.owned.length)
 
@@ -211,17 +218,47 @@ const ownedForWeapon = (weaponId?: string) => {
 	return ownedByWeapon.value[weaponId] || []
 }
 
-// Carousel helpers
+// Carousel helpers - use favorite chroma image if available
 const carouselImagesForWeapon = (weaponId?: string): string[] =>
 	ownedForWeapon(weaponId)
-		.map((s) => s.image_url || '')
+		.map((skin) => {
+			// Check if this skin has a favorite chroma
+			const favoriteChromaUuid = store.ownedFavoriteChromas[skin.uuid || '']
+			if (favoriteChromaUuid && skin.chromas) {
+				// Find the favorite chroma and use its image
+				const favoriteChroma = skin.chromas.find((c) => c.uuid === favoriteChromaUuid)
+				if (favoriteChroma?.displayIcon) {
+					return favoriteChroma.displayIcon
+				}
+			}
+			// Default: use the base skin image
+			return skin.image_url || ''
+		})
 		.filter(Boolean)
 
 const nameByImage = (weaponId: string | undefined, item: unknown): string => {
 	const src = String(item || '')
 	if (!src) return ''
-	const found = ownedForWeapon(weaponId).find((s) => s.image_url === src)
-	return found?.name ?? ''
+	const found = ownedForWeapon(weaponId).find((skin) => {
+		// Check if image matches base skin
+		if (skin.image_url === src) return true
+		// Check if image matches any chroma
+		if (skin.chromas) {
+			return skin.chromas.some((c) => c.displayIcon === src)
+		}
+		return false
+	})
+	if (!found) return ''
+
+	// If this is a chroma image, find which chroma and return its name
+	if (found.chromas) {
+		const matchingChroma = found.chromas.find((c) => c.displayIcon === src)
+		if (matchingChroma?.displayName) {
+			return matchingChroma.displayName
+		}
+	}
+
+	return found.name ?? ''
 }
 
 // Modal state and helpers

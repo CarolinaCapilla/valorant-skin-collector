@@ -40,9 +40,6 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 
 onMounted(async () => {
-	console.log('[OAuth Callback] Component mounted')
-	console.log('[OAuth Callback] Route query:', route.query)
-
 	try {
 		// Check if there's an error from OAuth provider
 		if (route.query.error) {
@@ -62,13 +59,9 @@ onMounted(async () => {
 		const runtime = useRuntimeConfig()
 		const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
 
-		console.log('[OAuth Callback] Fetching user from:', `${BACKEND_BASE_URL}/api/user`)
-
 		const response = await $fetch<{ user: User }>(`${BACKEND_BASE_URL}/api/user`, {
 			credentials: 'include'
 		})
-
-		console.log('[OAuth Callback] User response:', response)
 
 		if (response.user) {
 			// Set user in store
