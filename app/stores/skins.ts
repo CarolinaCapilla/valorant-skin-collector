@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { $fetch } from 'ofetch'
 import type { Skin, SkinLevel, SkinChroma } from '~/types/skin'
 import type {
 	ValorantApiResponse,
@@ -89,7 +88,7 @@ export const useSkinsStore = defineStore('skins', {
 	actions: {
 		_getBackendUrl(): string {
 			const runtime = useRuntimeConfig()
-			return runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+			return runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 		},
 
 		addOwned(skin: Skin) {
@@ -191,7 +190,7 @@ export const useSkinsStore = defineStore('skins', {
 		async fetchSkinsFromApi(): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
-				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
 				// Fetch and display in batches for better UX
 				const BATCH_SIZE = 300
@@ -289,14 +288,14 @@ export const useSkinsStore = defineStore('skins', {
 		async fetchUserCollection(): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
-				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
 				const res = await $fetch<{
 					data?: Array<{
 						skin_uuid: string
 						metadata?: { favorite_chroma_uuid?: string } | null
 					}>
-				}>(`${BACKEND_BASE_URL}/api/v1/user/collection`, { credentials: 'include' })
+				}>(`${BACKEND_BASE_URL}/api/v1/user/collection`)
 
 				const userSkins = res?.data || []
 
@@ -333,7 +332,7 @@ export const useSkinsStore = defineStore('skins', {
 		async addSkinToCollection(skinUuid: string, favoriteChromaUuid?: string): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
-				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
 				const body: {
 					skin_uuid: string
@@ -350,8 +349,7 @@ export const useSkinsStore = defineStore('skins', {
 
 				await $fetch(`${BACKEND_BASE_URL}/api/v1/user/collection`, {
 					method: 'POST',
-					body,
-					credentials: 'include'
+					body
 				})
 
 				// Update local state
@@ -364,25 +362,28 @@ export const useSkinsStore = defineStore('skins', {
 				if (favoriteChromaUuid) {
 					this.ownedFavoriteChromas[skinUuid] = favoriteChromaUuid
 				}
+
+				// Automatically remove from wishlist if present
+				const isInWishlist = this.wishlist.find((s) => s.uuid === skinUuid)
+				if (isInWishlist) {
+					await this.removeSkinFromWishlist(skinUuid)
+				}
 			} catch (error) {
 				console.error('Failed to add skin to collection', error)
 				throw error
 			}
-		},
-
-		/**
+		} /**
 		 * Remove skin from user's collection
-		 */
+		 */,
 		async removeSkinFromCollection(skinUuid: string): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
-				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
 				const url = `${BACKEND_BASE_URL}/api/v1/user/collection/skin`
 
 				await $fetch(url, {
 					method: 'DELETE',
-					credentials: 'include',
 					query: {
 						skin_uuid: skinUuid
 					}
@@ -402,15 +403,14 @@ export const useSkinsStore = defineStore('skins', {
 		async updateFavoriteChroma(skinUuid: string, favoriteChromaUuid: string): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
-				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
 				await $fetch(`${BACKEND_BASE_URL}/api/v1/user/collection/favorite-chroma`, {
 					method: 'PATCH',
 					body: {
 						skin_uuid: skinUuid,
 						favorite_chroma_uuid: favoriteChromaUuid
-					},
-					credentials: 'include'
+					}
 				})
 
 				// Update local state
@@ -427,14 +427,14 @@ export const useSkinsStore = defineStore('skins', {
 		async fetchUserWishlist(): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
-				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
 				const res = await $fetch<{
 					data?: Array<{
 						skin_uuid: string
 						metadata?: { favorite_chroma_uuid?: string } | null
 					}>
-				}>(`${BACKEND_BASE_URL}/api/v1/user/collection?wishlist=1`, { credentials: 'include' })
+				}>(`${BACKEND_BASE_URL}/api/v1/user/collection?wishlist=1`)
 
 				const wishlistSkins = res?.data || []
 
@@ -473,15 +473,14 @@ export const useSkinsStore = defineStore('skins', {
 		async addSkinToWishlist(skinUuid: string, favoriteChromaUuid?: string): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
-				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
 				await $fetch(`${BACKEND_BASE_URL}/api/v1/user/wishlist`, {
 					method: 'POST',
 					body: {
 						skin_uuid: skinUuid,
 						favorite_chroma_uuid: favoriteChromaUuid || undefined
-					},
-					credentials: 'include'
+					}
 				})
 
 				// Update local state
@@ -506,13 +505,12 @@ export const useSkinsStore = defineStore('skins', {
 		async removeSkinFromWishlist(skinUuid: string): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
-				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
 				const url = `${BACKEND_BASE_URL}/api/v1/user/wishlist/skin`
 
 				await $fetch(url, {
 					method: 'DELETE',
-					credentials: 'include',
 					query: {
 						skin_uuid: skinUuid
 					}

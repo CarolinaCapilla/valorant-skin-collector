@@ -54,25 +54,38 @@ onMounted(async () => {
 			return
 		}
 
-		// Get user data from backend
-		// The Laravel backend should have already set the session cookie
-		const runtime = useRuntimeConfig()
-		const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+		// For token-based OAuth, the backend should pass the token via query param
+		const token = route.query.token as string | undefined
 
-		const response = await $fetch<{ user: User }>(`${BACKEND_BASE_URL}/api/user`, {
-			credentials: 'include'
-		})
+		if (token) {
+			// Store the token
+			localStorage.setItem('auth_token', token)
+			authStore.token = token
 
-		if (response.user) {
-			// Set user in store
-			authStore.setUser(response.user)
+			// Fetch user info with the token
+			const runtime = useRuntimeConfig()
+			const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
-			notify.success('Success', `Welcome back, ${response.user.name}!`)
+			const response = await $fetch<{ user: User }>(`${BACKEND_BASE_URL}/api/v1/me`, {
+				headers: {
+					Authorization: `Bearer ${token}`
+				}
+			})
 
-			// Redirect to home
-			router.push('/')
+			if (response.user) {
+				// Set user in store
+				authStore.user = response.user
+				authStore.isAuthenticated = true
+
+				notify.success('Success', `Welcome back, ${response.user.name}!`)
+
+				// Redirect to home
+				router.push('/')
+			} else {
+				throw new Error('Failed to retrieve user information')
+			}
 		} else {
-			throw new Error('Failed to retrieve user information')
+			throw new Error('No authentication token received')
 		}
 	} catch (err) {
 		console.error('[OAuth Callback] Error:', err)

@@ -25,3 +25,5 @@ logs
 
 # Deployment guide
 DEPLOYMENT_GUIDE.md
+DEPLOYMENT_CHANGES.md
+GIT_COMMITS.md

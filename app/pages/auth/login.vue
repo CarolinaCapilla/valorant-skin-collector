@@ -39,7 +39,23 @@ useSeoMeta({
 
 const notify = useNotification()
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
+
+// Check for OAuth error in query params
+onMounted(() => {
+	const error = route.query.error as string | undefined
+	if (error) {
+		const errorMessages: Record<string, string> = {
+			authentication_failed: 'Authentication failed. Please try again.',
+			unsupported_provider: 'Unsupported authentication provider.'
+		}
+		notify.error('Error', errorMessages[error] || 'An error occurred during authentication')
+
+		// Clean up the URL by removing the error param
+		router.replace({ query: {} })
+	}
+})
 
 const fields = [
 	{

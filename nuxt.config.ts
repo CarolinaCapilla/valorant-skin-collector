@@ -13,7 +13,9 @@ export default defineNuxtConfig({
 	},
 	runtimeConfig: {
 		public: {
-			backendBaseUrl: 'http://localhost:8000'
+			// API base URL - override with env var in production
+			apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
+			backendFetchSize: 500
 		}
 	},
 	compatibilityDate: '2025-10-10',
