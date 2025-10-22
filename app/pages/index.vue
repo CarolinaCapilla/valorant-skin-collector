@@ -197,7 +197,7 @@ function startAnimation() {
 		}
 
 		if (line.orientation === 'h') {
-			$anime({
+			const animation = $anime({
 				targets: element,
 				translateX: [0, width * 1.4],
 				opacity: [
@@ -210,8 +210,9 @@ function startAnimation() {
 				easing: 'linear',
 				loop: true
 			})
+			console.log('Horizontal animation created:', line.id, animation)
 		} else {
-			$anime({
+			const animation = $anime({
 				targets: element,
 				translateY: [0, height * 1.4],
 				opacity: [
@@ -224,6 +225,7 @@ function startAnimation() {
 				easing: 'linear',
 				loop: true
 			})
+			console.log('Vertical animation created:', line.id, animation)
 		}
 	}
 }
