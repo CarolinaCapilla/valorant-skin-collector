@@ -103,13 +103,8 @@
 						</div>
 
 						<!-- Actions -->
-						<div class="mt-3 flex items-center justify-end gap-3">
-							<UButton size="xs" color="primary" variant="outline" @click="openModal(weapon.uuid)">
-								View
-							</UButton>
-							<NuxtLink to="/skins" class="text-xs text-primary hover:underline">
-								Manage skins
-							</NuxtLink>
+						<div class="mt-3 flex items-center justify-center">
+							<UButton size="sm" variant="outline" @click="openModal(weapon.uuid)"> View </UButton>
 						</div>
 					</div>
 				</UCard>
@@ -134,17 +129,16 @@ import type { Skin } from '~/types/skin'
 const store = useSkinsStore()
 const isDev = import.meta.dev
 
-// Ensure data is available
+// Ensure static data is available during SSR
 await callOnce('collection:content-tiers', () => store.fetchContentTiers())
-await Promise.all([
-	callOnce('collection:skin-collections', () => store.fetchSkinCollections()),
-	callOnce('collection:weapons', () => store.fetchWeapons()),
-	callOnce('collection:skins', () => store.fetchSkins())
-])
+await callOnce('collection:skin-collections', () => store.fetchSkinCollections())
 
-// Wait a tick to ensure reactive state is updated
-await nextTick()
-await store.fetchUserCollection()
+// Fetch user-specific data on client-side only to avoid hydration mismatch
+onMounted(async () => {
+	await store.fetchWeapons()
+	await store.fetchSkins()
+	await store.fetchUserCollection()
+})
 
 const ownedCount = computed(() => store.owned.length)
 

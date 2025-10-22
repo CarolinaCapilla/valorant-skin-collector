@@ -303,6 +303,16 @@ export const useSkinsStore = defineStore('skins', {
 				// Map backend skin_uuids to our Skin objects
 				this.owned = this.skins.filter((skin) => userSkins.some((us) => us.skin_uuid === skin.uuid))
 
+				// Fix weapon field if empty by looking up in skinToWeaponBySkinId map
+				this.owned.forEach((skin) => {
+					if (!skin.weapon && skin.uuid) {
+						const weaponId = this.skinToWeaponBySkinId[skin.uuid]
+						if (weaponId) {
+							skin.weapon = weaponId
+						}
+					}
+				})
+
 				// Extract favorite chromas
 				this.ownedFavoriteChromas = {}
 				userSkins.forEach((us) => {
@@ -387,6 +397,31 @@ export const useSkinsStore = defineStore('skins', {
 		},
 
 		/**
+		 * Update favorite chroma for an owned skin
+		 */
+		async updateFavoriteChroma(skinUuid: string, favoriteChromaUuid: string): Promise<void> {
+			try {
+				const runtime = useRuntimeConfig()
+				const BACKEND_BASE_URL = runtime.public?.backendBaseUrl ?? 'http://localhost:8000'
+
+				await $fetch(`${BACKEND_BASE_URL}/api/v1/user/collection/favorite-chroma`, {
+					method: 'PATCH',
+					body: {
+						skin_uuid: skinUuid,
+						favorite_chroma_uuid: favoriteChromaUuid
+					},
+					credentials: 'include'
+				})
+
+				// Update local state
+				this.ownedFavoriteChromas[skinUuid] = favoriteChromaUuid
+			} catch (error) {
+				console.error('Failed to update favorite chroma', error)
+				throw error
+			}
+		},
+
+		/**
 		 * Fetch user's wishlist from backend
 		 */
 		async fetchUserWishlist(): Promise<void> {
@@ -407,6 +442,16 @@ export const useSkinsStore = defineStore('skins', {
 				this.wishlist = this.skins.filter((skin) =>
 					wishlistSkins.some((ws) => ws.skin_uuid === skin.uuid)
 				)
+
+				// Fix weapon field if empty by looking up in skinToWeaponBySkinId map
+				this.wishlist.forEach((skin) => {
+					if (!skin.weapon && skin.uuid) {
+						const weaponId = this.skinToWeaponBySkinId[skin.uuid]
+						if (weaponId) {
+							skin.weapon = weaponId
+						}
+					}
+				})
 
 				// Extract favorite chromas
 				this.wishlistFavoriteChromas = {}

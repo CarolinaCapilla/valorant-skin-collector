@@ -69,9 +69,9 @@
 	gap: 0.5rem;
 	padding: 0.5rem 1rem;
 	border-radius: 0.5rem;
-	border: 1px solid color-mix(in oklch, var(--color-primary) 90%, white 10%);
-	color: var(--color-primary) !important;
-	background: transparent;
+	border: 1px solid color-mix(in oklch, var(--color-primary, #ff4655) 90%, white 10%);
+	color: var(--color-primary, #ff4655) !important;
+	background: transparent !important;
 	overflow: hidden;
 	transition:
 		color 200ms ease,
@@ -84,8 +84,8 @@
 	transform: translateX(100%);
 	background: linear-gradient(
 		to left,
-		color-mix(in oklch, var(--color-primary) 100%, black 0%),
-		var(--color-primary)
+		color-mix(in oklch, var(--color-primary, #ff4655) 100%, black 0%),
+		var(--color-primary, #ff4655)
 	);
 	transition: transform 300ms ease;
 	z-index: -1;
@@ -96,7 +96,7 @@
 
 .btn-sweep:hover {
 	color: white !important;
-	border-color: var(--color-primary);
+	border-color: var(--color-primary, #ff4655);
 }
 
 /* Solid-to-outline sweep (inverse) */

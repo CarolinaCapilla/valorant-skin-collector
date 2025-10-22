@@ -24,10 +24,10 @@
 						></video>
 						<div
 							v-else
-							class="flex flex-col items-center justify-center h-[252px] w-[448px] bg-black/30 rounded-lg text-neutral-300 mx-auto"
+							class="flex flex-col items-center justify-center h-[252px] w-full max-w-[448px] bg-black/30 rounded-lg text-neutral-300 mx-auto"
 						>
 							<UIcon name="i-lucide-alert-triangle" class="h-10 w-10 text-neutral-400 mb-2" />
-							<p>No video available</p>
+							<p class="text-sm sm:text-base px-4 text-center">No video available</p>
 						</div>
 					</div>
 
@@ -120,9 +120,9 @@
 					</div>
 
 					<!-- Actions: -->
-					<div class="flex items-center justify-center gap-3">
+					<div class="flex items-center justify-center gap-3 flex-wrap">
 						<UButton
-							v-if="isOwned"
+							v-if="isOwned && authStore.isLoggedIn"
 							size="sm"
 							variant="outline"
 							class="btn-sweep"
@@ -131,7 +131,7 @@
 							Remove from collection
 						</UButton>
 						<UButton
-							v-if="!isOwned"
+							v-if="!isOwned && authStore.isLoggedIn"
 							size="sm"
 							variant="outline"
 							class="btn-sweep"
@@ -140,8 +140,20 @@
 							Add to collection
 						</UButton>
 
+						<!-- Set as Favorite button for owned skins -->
 						<UButton
-							v-if="isInWishlist"
+							v-if="isOwned && authStore.isLoggedIn && !isCurrentChromaFavorite"
+							size="sm"
+							variant="outline"
+							icon="i-lucide-star"
+							class="btn-sweep"
+							@click="setAsFavoriteChroma"
+						>
+							Set as Favorite
+						</UButton>
+
+						<UButton
+							v-if="isInWishlist && authStore.isLoggedIn"
 							size="sm"
 							variant="outline"
 							class="btn-sweep"
@@ -150,12 +162,20 @@
 							Remove from wishlist
 						</UButton>
 						<UButton
-							v-if="!isInWishlist"
+							v-if="!isInWishlist && !isOwned && authStore.isLoggedIn"
 							size="sm"
 							variant="outline"
 							class="btn-sweep"
 							@click="addToWishlist"
 						>
+							Add to wishlist
+						</UButton>
+					</div>
+					<div v-if="!authStore.isLoggedIn" class="flex items-center justify-center gap-3">
+						<UButton size="sm" variant="outline" class="btn-sweep" to="/auth/login">
+							Add to collection
+						</UButton>
+						<UButton size="sm" variant="outline" class="btn-sweep" to="/auth/login">
 							Add to wishlist
 						</UButton>
 					</div>
@@ -171,7 +191,9 @@
 import type { Skin } from '~/types/skin'
 import { computed, ref, watch } from 'vue'
 import { useSkinsStore } from '~/stores/skins'
+import { useAuthStore } from '~/stores/auth'
 
+const authStore = useAuthStore()
 const store = useSkinsStore()
 const notify = useNotification()
 
@@ -326,6 +348,25 @@ function isFavoriteChroma(chromaUuid?: string | null): boolean {
 	const favoriteChromaUuid =
 		store.ownedFavoriteChromas[skinUuid] || store.wishlistFavoriteChromas[skinUuid]
 	return favoriteChromaUuid === chromaUuid
+}
+
+// Check if current chroma is already the favorite
+const isCurrentChromaFavorite = computed(() => {
+	return isFavoriteChroma(activeChroma.value?.uuid)
+})
+
+// Update favorite chroma for owned skin
+async function setAsFavoriteChroma() {
+	if (!currentSkin.value?.uuid || !activeChroma.value?.uuid) return
+	const skinUuid = currentSkin.value.uuid
+	const chromaUuid = activeChroma.value.uuid
+
+	try {
+		await store.updateFavoriteChroma(skinUuid, chromaUuid)
+		notify.success('Favorite chroma updated!')
+	} catch {
+		notify.error('Failed to update favorite chroma.')
+	}
 }
 
 // Wishlist functionality

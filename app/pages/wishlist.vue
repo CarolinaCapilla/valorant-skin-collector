@@ -94,9 +94,15 @@
 							</div>
 						</div>
 
-						<!-- Manage link -->
-						<div class="mt-3 flex items-center justify-end gap-3">
-							<UButton size="xs" color="primary" variant="outline" @click="openModal(weapon.uuid)">
+						<!-- Actions -->
+						<div class="mt-3 flex items-center justify-center">
+							<UButton
+								size="sm"
+								color="primary"
+								variant="outline"
+								class="btn-sweep"
+								@click="openModal(weapon.uuid)"
+							>
 								View
 							</UButton>
 						</div>
@@ -122,17 +128,16 @@ import type { Skin } from '~/types/skin'
 
 const store = useSkinsStore()
 
-// Ensure data is available
+// Ensure static data is available during SSR
 await callOnce('wishlist:content-tiers', () => store.fetchContentTiers())
-await Promise.all([
-	callOnce('wishlist:skin-collections', () => store.fetchSkinCollections()),
-	callOnce('wishlist:weapons', () => store.fetchWeapons()),
-	callOnce('wishlist:skins', () => store.fetchSkins())
-])
+await callOnce('wishlist:skin-collections', () => store.fetchSkinCollections())
 
-// Wait a tick to ensure reactive state is updated
-await nextTick()
-await store.fetchUserWishlist()
+// Fetch user-specific data on client-side only to avoid hydration mismatch
+onMounted(async () => {
+	await store.fetchWeapons()
+	await store.fetchSkins()
+	await store.fetchUserWishlist()
+})
 
 const wishlistCount = computed(() => store.wishlist.length)
 // helper: normalize API categories to nice labels + order

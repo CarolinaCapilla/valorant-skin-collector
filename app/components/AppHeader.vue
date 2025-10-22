@@ -150,9 +150,4 @@ async function handleLogout() {
 		loggingOut.value = false
 	}
 }
-
-// Initialize auth state on component mount
-onMounted(() => {
-	authStore.initAuth()
-})
 </script>
