@@ -74,15 +74,25 @@ function generateLines() {
 	energyLines.value = []
 	// Read gap from CSS to avoid drift with design tokens
 	const grid = document.querySelector<HTMLElement>('.grid-bg')
-	const gapStr = grid ? getComputedStyle(grid).getPropertyValue('--gap') : '80px'
-	const GAP = Number.parseFloat(gapStr) || 80
+	if (!grid) {
+		return
+	}
+
+	const gapStr = getComputedStyle(grid).getPropertyValue('--gap')
+	const GAP = Number.parseFloat(gapStr) || 64
 	// Read adjustable vertical offset for horizontal lines (in px, negative moves lines up)
-	const yOffStr = grid ? getComputedStyle(grid).getPropertyValue('--energy-y-offset') : '-1.5px'
+	const yOffStr = getComputedStyle(grid).getPropertyValue('--energy-y-offset')
 	const YOFF = Number.parseFloat(yOffStr) || -1.5
 	// Use the grid container size, not the window, to match section height
-	const rect = grid?.getBoundingClientRect()
-	const vw = rect?.width ?? window.innerWidth
-	const vh = rect?.height ?? window.innerHeight
+	const rect = grid.getBoundingClientRect()
+	const vw = rect.width
+	const vh = rect.height
+
+	// Don't generate lines if dimensions are invalid (silently return during hydration)
+	if (vw <= 0 || vh <= 0) {
+		return
+	}
+
 	const cols = Math.ceil(vw / GAP)
 	const rows = Math.ceil(vh / GAP)
 
@@ -144,7 +154,11 @@ function startAnimation() {
 
 	// Check if anime is available
 	if (!$anime) {
-		console.error('Anime.js is not available')
+		return
+	}
+
+	// Check if we have any lines to animate (silently return during hydration)
+	if (energyLines.value.length === 0) {
 		return
 	}
 
@@ -152,27 +166,26 @@ function startAnimation() {
 
 	// Use the grid container size for travel distances
 	const grid = document.querySelector<HTMLElement>('.grid-bg')
-	const rect = grid?.getBoundingClientRect()
-	const width = rect?.width ?? window.innerWidth
-	const height = rect?.height ?? window.innerHeight
+	if (!grid) {
+		return
+	}
 
-	console.log('Starting animation with dimensions:', {
-		width,
-		height,
-		lineCount: energyLines.value.length,
-		anime: typeof $anime
-	})
+	const rect = grid.getBoundingClientRect()
+	const width = rect.width
+	const height = rect.height
+
+	// Don't animate if grid has invalid dimensions
+	if (width <= 0 || height <= 0) {
+		return
+	}
 
 	for (const line of energyLines.value) {
 		const selector = `[data-id="${line.id}"]`
 		const element = document.querySelector(selector)
 
 		if (!element) {
-			console.warn(`Element not found for selector: ${selector}`)
 			continue
 		}
-
-		console.log(`Animating ${selector}:`, { element, line })
 
 		if (line.orientation === 'h') {
 			$anime({
@@ -211,16 +224,29 @@ function stopAnimation() {
 }
 
 onMounted(async () => {
+	// Wait for DOM to be fully ready
 	await nextTick()
+
+	// Wait for ClientOnly component to render and CSS/layout to be complete
+	// This is especially important on Windows Chrome which needs more time for hydration
+	await new Promise((resolve) => setTimeout(resolve, 100))
+
 	generateLines()
+
+	// Wait for Vue to render the energy line elements
 	await nextTick()
+	await new Promise((resolve) => setTimeout(resolve, 50))
+
 	startAnimation()
+
 	// Optional: re-generate on resize (lightweight debounce)
 	let t: number | undefined
 	resizeHandler = () => {
 		if (t) window.clearTimeout(t)
-		t = window.setTimeout(() => {
+		t = window.setTimeout(async () => {
 			generateLines()
+			await nextTick()
+			await new Promise((resolve) => setTimeout(resolve, 50))
 			startAnimation()
 		}, 150)
 	}
@@ -229,8 +255,10 @@ onMounted(async () => {
 	// Observe grid container size changes to adjust lines to section height changes
 	const grid = document.querySelector<HTMLElement>('.grid-bg')
 	if (grid && 'ResizeObserver' in window) {
-		gridResizeObserver = new ResizeObserver(() => {
+		gridResizeObserver = new ResizeObserver(async () => {
 			generateLines()
+			await nextTick()
+			await new Promise((resolve) => setTimeout(resolve, 50))
 			startAnimation()
 		})
 		gridResizeObserver.observe(grid)
