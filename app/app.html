@@ -1,5 +1,5 @@
 <!doctype html>
-<html {{ HTML_ATTRS }}>
+<html {{ HTML_ATTRS }} class="dark">
 	<head {{ HEAD_ATTRS }}>
 		{{ HEAD }}
 		<!-- Prevent FOUC (Flash of Unstyled Content) -->
@@ -23,21 +23,21 @@
 				align-items: center;
 				justify-content: center;
 				gap: 12px;
-				background: white;
+				background: #111827;
 				z-index: 999999;
 				visibility: visible !important;
 			}
 			#loading-screen .spinner {
 				width: 32px;
 				height: 32px;
-				border: 3px solid #e5e7eb;
-				border-top-color: #3b82f6;
+				border: 3px solid #374151;
+				border-top-color: #ff4655;
 				border-radius: 50%;
 				animation: spin 0.6s linear infinite;
 			}
 			#loading-screen .text {
 				font-size: 14px;
-				color: #6b7280;
+				color: #9ca3af;
 				font-family:
 					system-ui,
 					-apple-system,
@@ -46,18 +46,6 @@
 			@keyframes spin {
 				to {
 					transform: rotate(360deg);
-				}
-			}
-			@media (prefers-color-scheme: dark) {
-				#loading-screen {
-					background: #111827;
-				}
-				#loading-screen .spinner {
-					border-color: #374151;
-					border-top-color: #3b82f6;
-				}
-				#loading-screen .text {
-					color: #9ca3af;
 				}
 			}
 		</style>

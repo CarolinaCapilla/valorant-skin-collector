@@ -103,17 +103,21 @@ function generateLines() {
 	const vIdx = pickRange(V_COUNT, 0, cols)
 
 	const lines: EnergyLine[] = []
-	for (const r of hIdx) {
-		lines.push({
-			id: `h-${r}`,
-			orientation: 'h',
-			x: -Math.round(vw * 0.3),
-			// Base position from grid with tweakable offset
-			y: r * GAP + YOFF,
-			length: Math.round(vw * (0.18 + Math.random() * 0.18)),
-			duration: 6000 + Math.floor(Math.random() * 4000),
-			delay: Math.floor(Math.random() * 4000)
-		})
+	// Only show horizontal lines on screens wider than 768px (tablet and above)
+	const showHorizontal = vw > 768
+	if (showHorizontal) {
+		for (const r of hIdx) {
+			lines.push({
+				id: `h-${r}`,
+				orientation: 'h',
+				x: -Math.round(vw * 0.3),
+				// Base position from grid with tweakable offset
+				y: r * GAP + YOFF,
+				length: Math.round(vw * (0.18 + Math.random() * 0.18)),
+				duration: 6000 + Math.floor(Math.random() * 4000),
+				delay: Math.floor(Math.random() * 1000)
+			})
+		}
 	}
 	for (const c of vIdx) {
 		lines.push({
@@ -123,7 +127,7 @@ function generateLines() {
 			y: -Math.round(vh * 0.3),
 			length: Math.round(vh * (0.18 + Math.random() * 0.18)),
 			duration: 7000 + Math.floor(Math.random() * 4000),
-			delay: Math.floor(Math.random() * 4000)
+			delay: Math.floor(Math.random() * 1000)
 		})
 	}
 	energyLines.value = lines
@@ -131,7 +135,16 @@ function generateLines() {
 
 function startAnimation() {
 	// Respect reduced motion
-	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		console.log('Animation disabled: prefers-reduced-motion is active')
+		return
+	}
+
+	// Check if anime is available
+	if (!$anime) {
+		console.error('Anime.js is not available')
+		return
+	}
 
 	$anime.remove('.energy-line')
 
@@ -141,12 +154,28 @@ function startAnimation() {
 	const width = rect?.width ?? window.innerWidth
 	const height = rect?.height ?? window.innerHeight
 
+	console.log('Starting animation with dimensions:', {
+		width,
+		height,
+		lineCount: energyLines.value.length,
+		anime: typeof $anime
+	})
+
 	for (const line of energyLines.value) {
 		const selector = `[data-id="${line.id}"]`
+		const element = document.querySelector(selector)
+
+		if (!element) {
+			console.warn(`Element not found for selector: ${selector}`)
+			continue
+		}
+
+		console.log(`Animating ${selector}:`, { element, line })
+
 		if (line.orientation === 'h') {
 			$anime({
-				targets: selector,
-				translateX: [-width * 0.3, width * 1.1],
+				targets: element,
+				translateX: [0, width * 1.4],
 				opacity: [
 					{ value: 0.2, duration: 300 },
 					{ value: 0.6, duration: 600 },
@@ -159,8 +188,8 @@ function startAnimation() {
 			})
 		} else {
 			$anime({
-				targets: selector,
-				translateY: [-height * 0.3, height * 1.1],
+				targets: element,
+				translateY: [0, height * 1.4],
 				opacity: [
 					{ value: 0.2, duration: 300 },
 					{ value: 0.6, duration: 600 },
@@ -226,7 +255,7 @@ onBeforeUnmount(() => {
 .grid-bg {
 	--gap: 64px;
 	/* Adjust this to nudge horizontal energy lines up/down */
-	--energy-y-offset: -13.5px;
+	--energy-y-offset: -37px;
 	/* Thickness controls (tweak these to make lines thicker/thinner) */
 	--energy-h-thickness: 3px;
 	--energy-v-thickness: 3px;
@@ -256,14 +285,14 @@ onBeforeUnmount(() => {
 .energy-line.h {
 	height: var(--energy-h-thickness, 2px);
 	width: var(--len, 300px);
-	background: linear-gradient(to right, transparent, rgba(239, 68, 68, 0.9), transparent);
-	filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.55));
+	background: linear-gradient(to right, transparent, rgba(255, 70, 85, 1), transparent);
+	filter: drop-shadow(0 0 12px rgba(255, 70, 85, 0.8));
 }
 .energy-line.v {
 	width: var(--energy-v-thickness, 2px);
 	height: var(--len, 300px);
-	background: linear-gradient(to bottom, transparent, rgba(239, 68, 68, 0.9), transparent);
-	filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.55));
+	background: linear-gradient(to bottom, transparent, rgba(255, 70, 85, 1), transparent);
+	filter: drop-shadow(0 0 12px rgba(255, 70, 85, 0.8));
 }
 
 @media (prefers-reduced-motion: reduce) {

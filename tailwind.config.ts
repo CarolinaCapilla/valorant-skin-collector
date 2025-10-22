@@ -1,4 +1,5 @@
 export default {
+	darkMode: 'class' // Use class-based dark mode instead of media query
 	// theme: {
 	// 	extend: {
 	// 		colors: {
@@ -10,7 +11,7 @@ export default {
 	// 			}
 	// 		},
 	// 		fontFamily: {
-	// 			sans: ['Rajdhani', 'sans-serif'] // Valorant’s geometric font
+	// 			sans: ['Rajdhani', 'sans-serif'] // Valorant's geometric font
 	// 		}
 	// 	}
 	// }
