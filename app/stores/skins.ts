@@ -372,9 +372,11 @@ export const useSkinsStore = defineStore('skins', {
 				console.error('Failed to add skin to collection', error)
 				throw error
 			}
-		} /**
+		},
+
+		/**
 		 * Remove skin from user's collection
-		 */,
+		 */
 		async removeSkinFromCollection(skinUuid: string): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
