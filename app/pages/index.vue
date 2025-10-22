@@ -255,7 +255,7 @@ onBeforeUnmount(() => {
 .grid-bg {
 	--gap: 64px;
 	/* Adjust this to nudge horizontal energy lines up/down */
-	--energy-y-offset: -37px;
+	--energy-y-offset: -10px;
 	/* Thickness controls (tweak these to make lines thicker/thinner) */
 	--energy-h-thickness: 3px;
 	--energy-v-thickness: 3px;
