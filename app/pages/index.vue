@@ -115,6 +115,7 @@ function generateLines() {
 	const lines: EnergyLine[] = []
 	// Only show horizontal lines on screens wider than 768px (tablet and above)
 	const showHorizontal = vw > 768
+	console.log('Generating lines:', { vw, vh, cols, rows, showHorizontal })
 	if (showHorizontal) {
 		for (const r of hIdx) {
 			lines.push({
@@ -179,11 +180,19 @@ function startAnimation() {
 		return
 	}
 
+	console.log('Animation starting:', {
+		width,
+		height,
+		lineCount: energyLines.value.length,
+		firstLineId: energyLines.value[0]?.id
+	})
+
 	for (const line of energyLines.value) {
 		const selector = `[data-id="${line.id}"]`
 		const element = document.querySelector(selector)
 
 		if (!element) {
+			console.warn('Element not found:', selector)
 			continue
 		}
 
