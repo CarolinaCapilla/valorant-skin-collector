@@ -335,10 +335,4 @@ onBeforeUnmount(() => {
 	background: linear-gradient(to bottom, transparent, rgba(255, 70, 85, 1), transparent);
 	filter: drop-shadow(0 0 12px rgba(255, 70, 85, 0.8));
 }
-
-@media (prefers-reduced-motion: reduce) {
-	.energy-line {
-		display: none;
-	}
-}
 </style>
