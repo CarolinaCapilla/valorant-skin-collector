@@ -26,6 +26,11 @@ export default defineNuxtConfig({
 		}
 	},
 	css: ['~/assets/css/main.css'],
+	colorMode: {
+		preference: 'dark', // Force dark mode as default
+		fallback: 'dark', // Fallback to dark if preference not found
+		storageKey: 'nuxt-color-mode' // localStorage key
+	},
 	ui: {
 		theme: {
 			// Register additional semantic color names (strings), not objects

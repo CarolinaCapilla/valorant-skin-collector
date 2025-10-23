@@ -2,6 +2,18 @@
 <html {{ HTML_ATTRS }} class="dark">
 	<head {{ HEAD_ATTRS }}>
 		{{ HEAD }}
+		<script>
+			// Force dark mode - prevent system preferences from overriding
+			(function() {
+				// Set dark mode in localStorage to prevent color-mode module from changing it
+				try {
+					localStorage.setItem('nuxt-color-mode', 'dark');
+				} catch (e) {}
+				// Ensure the html element always has dark class
+				document.documentElement.classList.add('dark');
+				document.documentElement.classList.remove('light');
+			})();
+		</script>
 	</head>
 	<body {{ BODY_ATTRS }}>
 		{{ APP }}
