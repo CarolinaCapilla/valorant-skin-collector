@@ -54,21 +54,38 @@
 
 <script setup lang="ts">
 import { useSkinsStore } from '~/stores/skins'
+import { useLoadingStore } from '~/stores/loading'
 import SkinModal from '~/components/SkinModal.vue'
 import type { Skin } from '~/types/skin'
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 
 const store = useSkinsStore()
+const loadingStore = useLoadingStore()
 
-await callOnce('content-tiers', () => store.fetchContentTiers())
+// Start loading immediately when this script runs (including navigation)
+loadingStore.startLoading()
 
-await Promise.all([
-	callOnce('collections', () => store.fetchSkinCollections()),
-	callOnce('weapons', () => store.fetchWeapons())
-])
+// If skins haven't been loaded yet, also show store loading
+if (store.skins.length === 0) {
+	store.loading = true
+}
 
-await callOnce('skins', () => store.fetchSkins())
+try {
+	await callOnce('content-tiers', () => store.fetchContentTiers())
+
+	await Promise.all([
+		callOnce('collections', () => store.fetchSkinCollections()),
+		callOnce('weapons', () => store.fetchWeapons())
+	])
+
+	await callOnce('skins', () => store.fetchSkins())
+} finally {
+	// Stop loading after data is ready
+	loadingStore.stopLoading()
+	store.loading = false
+}
+
 const { filteredSkins } = storeToRefs(store)
 
 // Pagination (20 items per page)
