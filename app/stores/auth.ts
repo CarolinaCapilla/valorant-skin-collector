@@ -29,9 +29,6 @@ export const useAuthStore = defineStore('auth', {
 				const runtime = useRuntimeConfig()
 				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
-				// Create a minimum delay promise (300ms) to ensure spinner is visible
-				const minDelay = new Promise((resolve) => setTimeout(resolve, 300))
-
 				// Check if token exists in localStorage
 				const token = localStorage.getItem('auth_token')
 
@@ -39,18 +36,12 @@ export const useAuthStore = defineStore('auth', {
 					this.token = token
 
 					// Verify token by fetching current user
-					const authPromise = $fetch<{ user: User }>(`${BACKEND_BASE_URL}/api/v1/me`)
-
-					// Wait for both the auth check and minimum delay
-					const [response] = await Promise.all([authPromise, minDelay])
+					const response = await $fetch<{ user: User }>(`${BACKEND_BASE_URL}/api/v1/me`)
 
 					if (response.user) {
 						this.user = response.user
 						this.isAuthenticated = true
 					}
-				} else {
-					// No token found, just wait for minimum delay
-					await minDelay
 				}
 			} catch (error) {
 				// Token is invalid or expired
@@ -59,9 +50,6 @@ export const useAuthStore = defineStore('auth', {
 				this.isAuthenticated = false
 				localStorage.removeItem('auth_token')
 				console.log('User not authenticated:', error)
-
-				// Still need to wait for minimum delay even on error
-				await new Promise((resolve) => setTimeout(resolve, 500))
 			} finally {
 				this.loading = false
 			}
