@@ -33,6 +33,7 @@ export default defineNuxtConfig({
 		}
 	},
 	css: ['~/assets/css/main.css'],
+
 	colorMode: {
 		preference: 'dark',
 		fallback: 'dark',
@@ -43,6 +44,7 @@ export default defineNuxtConfig({
 		classSuffix: '',
 		storageKey: 'nuxt-color-mode'
 	},
+
 	ui: {
 		theme: {
 			colors: ['primary', 'secondary', 'tertiary', 'info', 'success', 'warning', 'error']
@@ -58,6 +60,12 @@ export default defineNuxtConfig({
 		}
 	},
 	compatibilityDate: '2025-10-10',
+	nitro: {
+		routeRules: {
+			'/': { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate' } },
+			'/**': { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate' } }
+		}
+	},
 	anime: {
 		provide: true
 	},
