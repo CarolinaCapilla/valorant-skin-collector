@@ -36,23 +36,38 @@ const loadingStore = useLoadingStore()
 const config = useRuntimeConfig()
 
 // SEO meta tags for social media sharing
-useSeoMeta({
-	title: 'Valorant Skin Collector - Browse & Track Your Valorant Skins',
-	description:
-		'Browse and track every Valorant weapon skin with ease. Discover, collect, and wishlist — all for free, all in one place.',
-	ogTitle: 'Valorant Skin Collector',
-	ogDescription:
-		'Browse and track every Valorant weapon skin with ease. Discover, collect, and wishlist — all for free, all in one place.',
-	ogImage: `${config.public.siteUrl}/valorant_skin_collector_main.png`,
-	ogImageWidth: '2614',
-	ogImageHeight: '1398',
-	ogUrl: config.public.siteUrl,
-	ogType: 'website',
-	twitterCard: 'summary_large_image',
-	twitterTitle: 'Valorant Skin Collector',
-	twitterDescription:
-		'Browse and track every Valorant weapon skin with ease. Discover, collect, and wishlist — all for free, all in one place.',
-	twitterImage: `${config.public.siteUrl}/valorant_skin_collector_main.png`
+const siteUrl = config.public.siteUrl
+const ogImageUrl = `${siteUrl}/valorant_skin_collector_main.png`
+
+useHead({
+	meta: [
+		// Open Graph / Facebook / WhatsApp
+		{ property: 'og:type', content: 'website' },
+		{ property: 'og:url', content: siteUrl },
+		{ property: 'og:title', content: 'Valorant Skin Collector' },
+		{
+			property: 'og:description',
+			content:
+				'Browse and track every Valorant weapon skin with ease. Discover, collect, and wishlist — all for free, all in one place.'
+		},
+		{ property: 'og:image', content: ogImageUrl },
+		{ property: 'og:image:secure_url', content: ogImageUrl },
+		{ property: 'og:image:type', content: 'image/png' },
+		{ property: 'og:image:width', content: '2614' },
+		{ property: 'og:image:height', content: '1398' },
+		{ property: 'og:image:alt', content: 'Valorant Skin Collector Preview' },
+		{ property: 'og:site_name', content: 'Valorant Skin Collector' },
+		// Twitter
+		{ name: 'twitter:card', content: 'summary_large_image' },
+		{ name: 'twitter:title', content: 'Valorant Skin Collector' },
+		{
+			name: 'twitter:description',
+			content:
+				'Browse and track every Valorant weapon skin with ease. Discover, collect, and wishlist — all for free, all in one place.'
+		},
+		{ name: 'twitter:image', content: ogImageUrl },
+		{ name: 'twitter:image:alt', content: 'Valorant Skin Collector Preview' }
+	]
 })
 
 // Computed to show loading if either auth or global loading is active

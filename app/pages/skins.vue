@@ -83,11 +83,6 @@ const loadingStore = useLoadingStore()
 // Start loading immediately when this script runs (including navigation)
 loadingStore.startLoading()
 
-// If skins haven't been loaded yet, also show store loading
-if (store.skins.length === 0) {
-	store.loading = true
-}
-
 try {
 	await callOnce('content-tiers', () => store.fetchContentTiers())
 
@@ -96,16 +91,26 @@ try {
 		callOnce('weapons', () => store.fetchWeapons())
 	])
 
-	// Fetch skins with a callback to stop loading overlay after first batch
-	await callOnce('skins', () =>
-		store.fetchSkins(() => {
-			// Stop loading overlay after first batch loads (show content immediately)
-			loadingStore.stopLoading()
-			store.loading = false
-		})
-	)
-} finally {
-	// Ensure loading is stopped even if we had cached data or errors
+	// Check if skins are already loaded (cached)
+	if (store.skins.length > 0) {
+		// Data already cached, stop loading immediately
+		loadingStore.stopLoading()
+		store.loading = false
+	} else {
+		// First time loading - start loading in background without awaiting
+		store.loading = true
+
+		// Don't await - let it load in background, callback will hide loading after first batch
+		callOnce('skins', () =>
+			store.fetchSkins(() => {
+				// Stop loading overlay after first batch loads (show content immediately)
+				loadingStore.stopLoading()
+				store.loading = false
+			})
+		)
+	}
+} catch (error) {
+	console.error('Error loading page data:', error)
 	loadingStore.stopLoading()
 	store.loading = false
 }
