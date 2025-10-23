@@ -103,10 +103,10 @@ export const useSkinsStore = defineStore('skins', {
 		removeFromWishlist(id: number) {
 			this.wishlist = this.wishlist.filter((s) => s.id !== id)
 		},
-		async fetchSkins(): Promise<void> {
+		async fetchSkins(onFirstBatchLoaded?: () => void): Promise<void> {
 			try {
 				this.loading = true
-				await this.fetchSkinsFromApi()
+				await this.fetchSkinsFromApi(onFirstBatchLoaded)
 			} catch (error) {
 				console.error('Failed to fetch skins', error)
 				this.skins = []
@@ -187,7 +187,7 @@ export const useSkinsStore = defineStore('skins', {
 			}
 		},
 
-		async fetchSkinsFromApi(): Promise<void> {
+		async fetchSkinsFromApi(onFirstBatchLoaded?: () => void): Promise<void> {
 			try {
 				const runtime = useRuntimeConfig()
 				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
@@ -198,6 +198,7 @@ export const useSkinsStore = defineStore('skins', {
 				let page = 1
 				let hasMore = true
 				let globalIndex = 0
+				let isFirstBatch = true
 
 				while (hasMore) {
 					const url = `${BACKEND_BASE_URL}/api/v1/skins?perPage=${BATCH_SIZE}&page=${page}`
@@ -262,6 +263,13 @@ export const useSkinsStore = defineStore('skins', {
 					allTransformed = allTransformed.concat(batchTransformed)
 					// Update UI with current batch (progressive loading)
 					this.skins = allTransformed
+
+					// Signal that first batch is ready (stop loading overlay)
+					if (isFirstBatch && onFirstBatchLoaded) {
+						onFirstBatchLoaded()
+						isFirstBatch = false
+					}
+
 					// Check if there are more pages
 					const meta = res?.meta
 					if (meta && meta.page < meta.totalPages) {

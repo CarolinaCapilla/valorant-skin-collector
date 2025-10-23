@@ -96,9 +96,16 @@ try {
 		callOnce('weapons', () => store.fetchWeapons())
 	])
 
-	await callOnce('skins', () => store.fetchSkins())
+	// Fetch skins with a callback to stop loading overlay after first batch
+	await callOnce('skins', () =>
+		store.fetchSkins(() => {
+			// Stop loading overlay after first batch loads (show content immediately)
+			loadingStore.stopLoading()
+			store.loading = false
+		})
+	)
 } finally {
-	// Stop loading after data is ready
+	// Ensure loading is stopped even if we had cached data or errors
 	loadingStore.stopLoading()
 	store.loading = false
 }

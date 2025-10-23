@@ -157,11 +157,6 @@ function generateLines() {
 function startAnimation() {
 	// Note: We've decided to keep energy line animations even with prefers-reduced-motion
 	// since they are subtle background effects and not jarring or disorienting
-	// If you want to respect the setting, uncomment the code below:
-	// if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-	// 	console.log('Animation disabled: prefers-reduced-motion is active')
-	// 	return
-	// }
 
 	// Check if anime is available
 	if (!$anime) {
@@ -296,7 +291,7 @@ onBeforeUnmount(() => {
 .grid-bg {
 	--gap: 64px;
 	/* Adjust this to nudge horizontal energy lines up/down */
-	--energy-y-offset: -10px;
+	--energy-y-offset: -10.5px;
 	/* Thickness controls (tweak these to make lines thicker/thinner) */
 	--energy-h-thickness: 3px;
 	--energy-v-thickness: 3px;
