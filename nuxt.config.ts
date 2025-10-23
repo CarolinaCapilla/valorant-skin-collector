@@ -34,14 +34,17 @@ export default defineNuxtConfig({
 	},
 	css: ['~/assets/css/main.css'],
 	colorMode: {
-		preference: 'dark', // Force dark mode as default
-		fallback: 'dark', // Fallback to dark if preference not found
-		storageKey: 'nuxt-color-mode' // localStorage key
+		preference: 'dark',
+		fallback: 'dark',
+		hid: 'nuxt-color-mode-script',
+		globalName: '__NUXT_COLOR_MODE__',
+		componentName: 'ColorScheme',
+		classPrefix: '',
+		classSuffix: '',
+		storageKey: 'nuxt-color-mode'
 	},
 	ui: {
 		theme: {
-			// Register additional semantic color names (strings), not objects
-			// If you only use the defaults, you can remove this block entirely.
 			colors: ['primary', 'secondary', 'tertiary', 'info', 'success', 'warning', 'error']
 		}
 	},

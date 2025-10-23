@@ -1,9 +1,8 @@
 <!doctype html>
 <html {{ HTML_ATTRS }} class="dark">
 	<head {{ HEAD_ATTRS }}>
-		{{ HEAD }}
 		<script>
-			// Force dark mode - prevent system preferences from overriding
+			// Force dark mode BEFORE any other scripts run
 			(function() {
 				// Set dark mode in localStorage to prevent color-mode module from changing it
 				try {
@@ -14,6 +13,7 @@
 				document.documentElement.classList.remove('light');
 			})();
 		</script>
+		{{ HEAD }}
 	</head>
 	<body {{ BODY_ATTRS }}>
 		{{ APP }}
