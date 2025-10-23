@@ -46,6 +46,17 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, onActivated, onDeactivated, nextTick, ref } from 'vue'
 
+// SEO for home page
+useHead({
+	title: 'Home - Valorant Skin Collector'
+})
+
+useSeoMeta({
+	ogTitle: 'Valorant Skin Collector - Track Your Valorant Weapon Skins',
+	ogUrl: useRuntimeConfig().public.siteUrl,
+	twitterTitle: 'Valorant Skin Collector - Track Your Valorant Weapon Skins'
+})
+
 type Orientation = 'h' | 'v'
 interface EnergyLine {
 	id: string

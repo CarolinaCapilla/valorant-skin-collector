@@ -33,18 +33,33 @@ import { useLoadingStore } from '~/stores/loading'
 const toaster = { position: 'top-right' as const }
 const authStore = useAuthStore()
 const loadingStore = useLoadingStore()
+const config = useRuntimeConfig()
+
+// SEO meta tags for social media sharing
+useSeoMeta({
+	title: 'Valorant Skin Collector - Browse & Track Your Valorant Skins',
+	description:
+		'Browse and track every Valorant weapon skin with ease. Discover, collect, and wishlist — all for free, all in one place.',
+	ogTitle: 'Valorant Skin Collector',
+	ogDescription:
+		'Browse and track every Valorant weapon skin with ease. Discover, collect, and wishlist — all for free, all in one place.',
+	ogImage: `${config.public.siteUrl}/valorant_skin_collector_main.png`,
+	ogImageWidth: '2614',
+	ogImageHeight: '1398',
+	ogUrl: config.public.siteUrl,
+	ogType: 'website',
+	twitterCard: 'summary_large_image',
+	twitterTitle: 'Valorant Skin Collector',
+	twitterDescription:
+		'Browse and track every Valorant weapon skin with ease. Discover, collect, and wishlist — all for free, all in one place.',
+	twitterImage: `${config.public.siteUrl}/valorant_skin_collector_main.png`
+})
 
 // Computed to show loading if either auth or global loading is active
 const showLoading = computed(() => authStore.loading || loadingStore.isLoading)
 
 // Initialize auth state on app mount - this runs once when the app loads
 onMounted(async () => {
-	// Hide the initial loading screen once Vue is ready
-	const loadingScreen = document.getElementById('loading-screen')
-	if (loadingScreen) {
-		loadingScreen.style.display = 'none'
-	}
-
 	await authStore.initAuth()
 })
 </script>

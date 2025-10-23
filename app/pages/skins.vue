@@ -60,6 +60,23 @@ import type { Skin } from '~/types/skin'
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 
+// SEO for skins page
+useHead({
+	title: 'Browse Skins - Valorant Skin Collector'
+})
+
+useSeoMeta({
+	description:
+		'Browse the complete collection of Valorant weapon skins. Filter by weapon, collection, or tier. Track your owned skins and create your wishlist.',
+	ogTitle: 'Browse Skins - Valorant Skin Collector',
+	ogDescription:
+		'Browse the complete collection of Valorant weapon skins. Filter by weapon, collection, or tier.',
+	ogUrl: `${useRuntimeConfig().public.siteUrl}/skins`,
+	twitterTitle: 'Browse Skins - Valorant Skin Collector',
+	twitterDescription:
+		'Browse the complete collection of Valorant weapon skins. Filter by weapon, collection, or tier.'
+})
+
 const store = useSkinsStore()
 const loadingStore = useLoadingStore()
 
