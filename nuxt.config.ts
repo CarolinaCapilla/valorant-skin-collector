@@ -1,5 +1,12 @@
 export default defineNuxtConfig({
-	modules: ['@nuxt/ui', '@pinia/nuxt', '@nuxt/eslint', '@hypernym/nuxt-anime', '@nuxt/image'],
+	modules: [
+		'@nuxt/ui',
+		'@pinia/nuxt',
+		'@nuxt/eslint',
+		'@hypernym/nuxt-anime',
+		'@nuxt/image',
+		'@nuxtjs/color-mode'
+	],
 	devtools: {
 		enabled: true
 	},
