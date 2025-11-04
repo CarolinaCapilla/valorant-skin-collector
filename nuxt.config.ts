@@ -62,8 +62,18 @@ export default defineNuxtConfig({
 	compatibilityDate: '2025-10-10',
 	nitro: {
 		routeRules: {
+			// HTML pages - always revalidate for fresh content
 			'/': { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate' } },
-			'/**': { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate' } }
+
+			// Static assets - cache for 1 year (immutable after build)
+			'/_nuxt/**': { headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } },
+
+			// Images and static files - cache for 1 day
+			'/images/**': { headers: { 'Cache-Control': 'public, max-age=86400' } },
+			'/favicon.ico': { headers: { 'Cache-Control': 'public, max-age=86400' } },
+			'/*.png': { headers: { 'Cache-Control': 'public, max-age=86400' } },
+			'/*.jpg': { headers: { 'Cache-Control': 'public, max-age=86400' } },
+			'/*.svg': { headers: { 'Cache-Control': 'public, max-age=86400' } }
 		}
 	},
 	anime: {
