@@ -28,11 +28,9 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
-import { useLoadingStore } from '~/stores/loading'
 
 const toaster = { position: 'top-right' as const }
 const authStore = useAuthStore()
-const loadingStore = useLoadingStore()
 const config = useRuntimeConfig()
 
 // SEO meta tags for social media sharing
@@ -64,8 +62,8 @@ useSeoMeta({
 	twitterImageAlt: 'Valorant Skin Collector Preview'
 })
 
-// Computed to show loading if either auth or global loading is active
-const showLoading = computed(() => authStore.loading || loadingStore.isLoading)
+// Computed to show loading only for auth initialization
+const showLoading = computed(() => authStore.loading)
 
 // Initialize auth state on app mount - this runs once when the app loads
 onMounted(async () => {

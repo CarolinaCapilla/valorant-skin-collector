@@ -2,13 +2,18 @@
 	<div>
 		<FilterBar />
 
-		<!-- Loading state -->
-		<div v-if="store.loading" class="py-12 flex flex-col items-center justify-center gap-3">
-			<UIcon name="i-lucide-loader-circle" class="h-10 w-10 animate-spin text-neutral-400" />
-			<p class="text-sm text-neutral-400">Loading skins...</p>
+		<div v-if="store.loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 px-9">
+			<div v-for="i in perPage" :key="`skeleton-${i}`" class="flex flex-col">
+				<UCard class="relative overflow-hidden border border-neutral-700 rounded-lg shadow-lg">
+					<USkeleton class="w-full h-40" />
+					<div class="p-3 text-center space-y-2">
+						<USkeleton class="h-4 w-3/4 mx-auto" />
+						<USkeleton class="h-3 w-1/2 mx-auto" />
+					</div>
+				</UCard>
+			</div>
 		</div>
 
-		<!-- Skins grid -->
 		<div v-else-if="total > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 px-9">
 			<div v-for="skin in paginatedSkins" :key="skin.id" class="flex flex-col">
 				<div
@@ -24,7 +29,6 @@
 			</div>
 		</div>
 
-		<!-- No results when search is active -->
 		<div
 			v-else-if="store.filters.search && total === 0"
 			class="py-12 flex flex-col items-center justify-center gap-3 text-center px-6"
@@ -54,7 +58,6 @@
 
 <script setup lang="ts">
 import { useSkinsStore } from '~/stores/skins'
-import { useLoadingStore } from '~/stores/loading'
 import SkinModal from '~/components/SkinModal.vue'
 import type { Skin } from '~/types/skin'
 import { computed, ref, watch } from 'vue'
@@ -78,10 +81,6 @@ useSeoMeta({
 })
 
 const store = useSkinsStore()
-const loadingStore = useLoadingStore()
-
-// Start loading immediately when this script runs (including navigation)
-loadingStore.startLoading()
 
 try {
 	await callOnce('content-tiers', () => store.fetchContentTiers())
@@ -94,24 +93,21 @@ try {
 	// Check if skins are already loaded (cached)
 	if (store.skins.length > 0) {
 		// Data already cached, stop loading immediately
-		loadingStore.stopLoading()
 		store.loading = false
 	} else {
-		// First time loading - start loading in background without awaiting
+		// First time loading - show skeleton while loading
 		store.loading = true
 
-		// Don't await - let it load in background, callback will hide loading after first batch
+		// Don't await - let it load in background, callback will hide skeleton after first batch
 		callOnce('skins', () =>
 			store.fetchSkins(() => {
-				// Stop loading overlay after first batch loads (show content immediately)
-				loadingStore.stopLoading()
+				// Hide skeleton after first batch loads (show content immediately)
 				store.loading = false
 			})
 		)
 	}
 } catch (error) {
 	console.error('Error loading page data:', error)
-	loadingStore.stopLoading()
 	store.loading = false
 }
 
@@ -134,7 +130,6 @@ const modalSkins = ref<Skin[]>([])
 const modalSkinIndex = ref(0)
 
 function openPreview(skin: Skin) {
-	// Open modal over all filtered results so arrows navigate across filters
 	const list = filteredSkins.value || []
 	modalSkins.value = list.slice()
 	const idx = modalSkins.value.findIndex((s) => s.id === skin.id)
