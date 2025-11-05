@@ -53,8 +53,11 @@ npm run preview
 
 - The app expects skin data from an unofficial/community Valorant API. If you change providers or add a proxy, document the base URL and auth flow as needed.
 - Consider caching responses or adding retries for rate limits/instability.
+
 ### Laravel API project
+
 - To see the repo for the backend built with Laravel, visit [Valorant Skin Collector Laravel](https://github.com/CarolinaCapilla/valorant-skin-collector-laravel)
+
 ### Disclaimer
 
 Valorant is a trademark of Riot Games. This project is for educational/personal use and is not endorsed by or affiliated with Riot Games.

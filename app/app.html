@@ -3,15 +3,15 @@
 	<head {{ HEAD_ATTRS }}>
 		<script>
 			// Force dark mode BEFORE any other scripts run
-			(function() {
+			(function () {
 				// Set dark mode in localStorage to prevent color-mode module from changing it
 				try {
-					localStorage.setItem('nuxt-color-mode', 'dark');
+					localStorage.setItem('nuxt-color-mode', 'dark')
 				} catch (e) {}
 				// Ensure the html element always has dark class
-				document.documentElement.classList.add('dark');
-				document.documentElement.classList.remove('light');
-			})();
+				document.documentElement.classList.add('dark')
+				document.documentElement.classList.remove('light')
+			})()
 		</script>
 		{{ HEAD }}
 	</head>
