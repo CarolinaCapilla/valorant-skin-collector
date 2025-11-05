@@ -122,24 +122,26 @@
 </template>
 
 <script setup lang="ts">
-import { useSkinsStore } from '~/stores/skins'
-import type { ValorantWeapon } from '~/types/api'
-import type { Skin } from '~/types/skin'
+import { useCatalogStore } from '@/stores/catalog'
+import { useWishlistStore } from '@/stores/wishlist'
+import type { ValorantWeapon } from '@/types/api'
+import type { Skin } from '@/types/skin'
 
-const store = useSkinsStore()
+const catalogStore = useCatalogStore()
+const wishlistStore = useWishlistStore()
 
 // Ensure static data is available during SSR
-await callOnce('wishlist:content-tiers', () => store.fetchContentTiers())
-await callOnce('wishlist:skin-collections', () => store.fetchSkinCollections())
+await callOnce('wishlist:content-tiers', () => catalogStore.fetchContentTiers())
+await callOnce('wishlist:skin-collections', () => catalogStore.fetchSkinCollections())
 
 // Fetch user-specific data on client-side only to avoid hydration mismatch
 onMounted(async () => {
-	await store.fetchWeapons()
-	await store.fetchSkins()
-	await store.fetchUserWishlist()
+	await catalogStore.fetchWeapons()
+	await catalogStore.fetchSkins()
+	await wishlistStore.fetchWishlist()
 })
 
-const wishlistCount = computed(() => store.wishlist.length)
+const wishlistCount = computed(() => wishlistStore.wishlist.length)
 // helper: normalize API categories to nice labels + order
 const categoryLabel = (raw?: string) => {
 	switch (raw) {
@@ -174,7 +176,7 @@ const categoryOrder = [
 
 const groupedWeapons = computed(() => {
 	const groups = new Map<string, ValorantWeapon[]>()
-	for (const w of store.weapons) {
+	for (const w of catalogStore.weapons) {
 		const label = categoryLabel(w.category)
 		if (!groups.has(label)) groups.set(label, [])
 		groups.get(label)!.push(w)
@@ -188,7 +190,7 @@ const groupedWeapons = computed(() => {
 // Build wishlist skins by weapon map for quick lookup
 const wishlistByWeapon = computed(() => {
 	const map: Record<string, Skin[]> = {}
-	for (const s of store.wishlist) {
+	for (const s of wishlistStore.wishlist) {
 		const wid = s.weapon || ''
 		if (!wid) continue
 		if (!map[wid]) map[wid] = []
@@ -212,7 +214,7 @@ const carouselImagesForWeapon = (weaponId?: string): string[] =>
 	wishlistForWeapon(weaponId)
 		.map((skin) => {
 			// Check if this skin has a favorite chroma
-			const favoriteChromaUuid = store.wishlistFavoriteChromas[skin.uuid || '']
+			const favoriteChromaUuid = wishlistStore.favoriteChromas[skin.uuid || '']
 			if (favoriteChromaUuid && skin.chromas) {
 				// Find the favorite chroma and use its image
 				const favoriteChroma = skin.chromas.find((c) => c.uuid === favoriteChromaUuid)

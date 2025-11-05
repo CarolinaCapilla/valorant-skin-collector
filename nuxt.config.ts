@@ -32,7 +32,7 @@ export default defineNuxtConfig({
 			link: [{ rel: 'icon', type: 'image/png', href: '/valorant_skin_collector_logo.png' }]
 		}
 	},
-	css: ['~/assets/css/main.css'],
+	css: ['@/assets/css/main.css'],
 
 	colorMode: {
 		preference: 'dark',

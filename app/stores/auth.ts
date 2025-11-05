@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { User, LoginCredentials, RegisterCredentials } from '~/types/auth'
+import type { User, LoginCredentials, RegisterCredentials } from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', {
 	state: () => ({
@@ -20,9 +20,6 @@ export const useAuthStore = defineStore('auth', {
 	},
 
 	actions: {
-		/**
-		 * Initialize auth state from localStorage token
-		 */
 		async initAuth(): Promise<void> {
 			try {
 				this.loading = true
@@ -54,10 +51,6 @@ export const useAuthStore = defineStore('auth', {
 				this.loading = false
 			}
 		},
-
-		/**
-		 * Login with email and password
-		 */
 		async login(credentials: LoginCredentials): Promise<void> {
 			try {
 				this.loading = true
@@ -93,10 +86,6 @@ export const useAuthStore = defineStore('auth', {
 				this.loading = false
 			}
 		},
-
-		/**
-		 * Register new user
-		 */
 		async register(credentials: RegisterCredentials): Promise<void> {
 			try {
 				this.loading = true
@@ -132,10 +121,6 @@ export const useAuthStore = defineStore('auth', {
 				this.loading = false
 			}
 		},
-
-		/**
-		 * Logout current user
-		 */
 		async logout(): Promise<void> {
 			try {
 				this.loading = true
@@ -162,10 +147,6 @@ export const useAuthStore = defineStore('auth', {
 				localStorage.removeItem('auth_token')
 			}
 		},
-
-		/**
-		 * Redirect to OAuth provider (GitHub, Google)
-		 */
 		redirectToOAuthProvider(provider: 'github' | 'google'): void {
 			const runtime = useRuntimeConfig()
 			const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
@@ -174,18 +155,10 @@ export const useAuthStore = defineStore('auth', {
 			// Redirect to Laravel backend OAuth route
 			window.location.href = redirectUrl
 		},
-
-		/**
-		 * Handle OAuth callback - set user after successful OAuth login
-		 */
 		setUser(user: User): void {
 			this.user = user
 			this.isAuthenticated = true
 		},
-
-		/**
-		 * Clear error message
-		 */
 		clearError(): void {
 			this.error = null
 		}

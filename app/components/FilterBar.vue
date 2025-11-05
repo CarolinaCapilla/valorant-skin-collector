@@ -94,16 +94,18 @@
 </template>
 
 <script setup lang="ts">
-import { useSkinsStore } from '~/stores/skins'
+import { useCatalogStore } from '@/stores/catalog'
+import { useFiltersStore } from '@/stores/filters'
 import { toRef, computed, ref } from 'vue'
 
-const store = useSkinsStore()
-const { collectionDictionary, contentTierDictionary, weaponDictionary } = storeToRefs(store)
+const catalogStore = useCatalogStore()
+const { collectionDictionary, contentTierDictionary, weaponDictionary } = storeToRefs(catalogStore)
 
-const weapon = toRef(store.filters, 'weapon')
-const collection = toRef(store.filters, 'collection')
-const tier = toRef(store.filters, 'tier')
-const search = toRef(store.filters, 'search')
+const filters = useFiltersStore()
+const weapon = toRef(filters, 'weapon')
+const collection = toRef(filters, 'collection')
+const tier = toRef(filters, 'tier')
+const search = toRef(filters, 'search')
 
 const isClearingFilters = ref(false)
 const isClearingQuery = ref(false)
@@ -115,7 +117,7 @@ const clearCurrentFilters = async () => {
 
 	await new Promise((r) => setTimeout(r, 100))
 
-	store.clearFilters()
+	filters.clearAll()
 
 	isClearingFilters.value = false
 }
@@ -127,7 +129,7 @@ const clearSearchQuery = async () => {
 
 	await new Promise((r) => setTimeout(r, 100))
 
-	store.filters.search = ''
+	filters.search = ''
 
 	isClearingQuery.value = false
 }

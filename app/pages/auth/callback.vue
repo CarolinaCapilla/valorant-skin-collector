@@ -24,8 +24,8 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '~/stores/auth'
-import type { User } from '~/types/auth'
+import { useAuthStore } from '@/stores/auth'
+import type { User } from '@/types/auth'
 
 definePageMeta({
 	layout: 'auth'

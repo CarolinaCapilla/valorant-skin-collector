@@ -188,13 +188,15 @@
 </template>
 
 <script setup lang="ts">
-import type { Skin } from '~/types/skin'
+import type { Skin } from '@/types/skin'
 import { computed, ref, watch } from 'vue'
-import { useSkinsStore } from '~/stores/skins'
-import { useAuthStore } from '~/stores/auth'
+import { useCollectionStore } from '@/stores/collection'
+import { useWishlistStore } from '@/stores/wishlist'
+import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
-const store = useSkinsStore()
+const collectionStore = useCollectionStore()
+const wishlistStore = useWishlistStore()
 const notify = useNotification()
 
 const props = defineProps<{
@@ -256,7 +258,7 @@ watch(currentSkin, (skin) => {
 	// Check if this skin has a favorite chroma
 	if (skin?.uuid) {
 		const favoriteChromaUuid =
-			store.ownedFavoriteChromas[skin.uuid] || store.wishlistFavoriteChromas[skin.uuid]
+			collectionStore.getFavoriteChroma(skin.uuid) || wishlistStore.getFavoriteChroma(skin.uuid)
 
 		if (favoriteChromaUuid && skin.chromas) {
 			// Find the index of the favorite chroma
@@ -298,19 +300,19 @@ function setLevel(idx: number) {
 const isOwned = computed(() => {
 	const baseUuid = currentSkin.value?.uuid
 	if (!baseUuid) return false
-	return store.owned.some((s) => s.uuid === baseUuid)
+	return collectionStore.hasSkin(baseUuid)
 })
 
 async function addToCollection() {
 	if (!currentSkin.value?.uuid) return
 	const baseUuid = currentSkin.value.uuid
 
-	if (store.owned.find((s) => s.uuid === baseUuid)) return
+	if (collectionStore.hasSkin(baseUuid)) return
 
 	try {
 		// Pass the currently selected chroma as favorite
 		const favoriteChromaUuid = activeChroma.value?.uuid
-		await store.addSkinToCollection(baseUuid, favoriteChromaUuid)
+		await collectionStore.addSkin(baseUuid, favoriteChromaUuid)
 		notify.success('Skin added to your collection.')
 		openProxy.value = false
 	} catch {
@@ -323,15 +325,13 @@ async function removeFromCollection() {
 
 	const baseUuid = currentSkin.value.uuid
 
-	if (!store.owned.find((s) => s.uuid === baseUuid)) {
+	if (!collectionStore.hasSkin(baseUuid)) {
 		notify.error('Skin not found in your collection.')
 		return
 	}
 
 	try {
-		await store.removeSkinFromCollection(baseUuid)
-		// Also clear favorite chroma when removing
-		store.ownedFavoriteChromas[baseUuid] = undefined
+		await collectionStore.removeSkin(baseUuid)
 		notify.success('Skin removed from your collection.')
 		openProxy.value = false
 	} catch {
@@ -346,7 +346,7 @@ function isFavoriteChroma(chromaUuid?: string | null): boolean {
 	if (!chromaUuid || !currentSkin.value?.uuid) return false
 	const skinUuid = currentSkin.value.uuid
 	const favoriteChromaUuid =
-		store.ownedFavoriteChromas[skinUuid] || store.wishlistFavoriteChromas[skinUuid]
+		collectionStore.getFavoriteChroma(skinUuid) || wishlistStore.getFavoriteChroma(skinUuid)
 	return favoriteChromaUuid === chromaUuid
 }
 
@@ -362,7 +362,7 @@ async function setAsFavoriteChroma() {
 	const chromaUuid = activeChroma.value.uuid
 
 	try {
-		await store.updateFavoriteChroma(skinUuid, chromaUuid)
+		await collectionStore.updateFavoriteChroma(skinUuid, chromaUuid)
 		notify.success('Favorite chroma updated!')
 	} catch {
 		notify.error('Failed to update favorite chroma.')
@@ -373,19 +373,19 @@ async function setAsFavoriteChroma() {
 const isInWishlist = computed(() => {
 	const baseUuid = currentSkin.value?.uuid
 	if (!baseUuid) return false
-	return store.wishlist.some((s) => s.uuid === baseUuid)
+	return wishlistStore.hasSkin(baseUuid)
 })
 
 async function addToWishlist() {
 	if (!currentSkin.value?.uuid) return
 	const baseUuid = currentSkin.value.uuid
 
-	if (store.wishlist.find((s) => s.uuid === baseUuid)) return
+	if (wishlistStore.hasSkin(baseUuid)) return
 
 	try {
 		// Pass the currently selected chroma as favorite
 		const favoriteChromaUuid = activeChroma.value?.uuid
-		await store.addSkinToWishlist(baseUuid, favoriteChromaUuid)
+		await wishlistStore.addSkin(baseUuid, favoriteChromaUuid)
 		notify.success('Skin added to your wishlist.')
 		openProxy.value = false
 	} catch {
@@ -397,15 +397,13 @@ async function removeFromWishlist() {
 	if (!currentSkin.value?.uuid) return
 	const baseUuid = currentSkin.value.uuid
 
-	if (!store.wishlist.find((s) => s.uuid === baseUuid)) {
+	if (!wishlistStore.hasSkin(baseUuid)) {
 		notify.error('Skin not found in your wishlist.')
 		return
 	}
 
 	try {
-		await store.removeSkinFromWishlist(baseUuid)
-		// Also clear favorite chroma when removing
-		store.wishlistFavoriteChromas[baseUuid] = undefined
+		await wishlistStore.removeSkin(baseUuid)
 		notify.success('Skin removed from your wishlist.')
 		openProxy.value = false
 	} catch {

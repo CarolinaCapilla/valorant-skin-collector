@@ -122,25 +122,27 @@
 </template>
 
 <script setup lang="ts">
-import { useSkinsStore } from '~/stores/skins'
-import type { ValorantWeapon } from '~/types/api'
-import type { Skin } from '~/types/skin'
+import { useCatalogStore } from '@/stores/catalog'
+import { useCollectionStore } from '@/stores/collection'
+import type { ValorantWeapon } from '@/types/api'
+import type { Skin } from '@/types/skin'
 
-const store = useSkinsStore()
+const catalogStore = useCatalogStore()
+const collectionStore = useCollectionStore()
 const isDev = import.meta.dev
 
 // Ensure static data is available during SSR
-await callOnce('collection:content-tiers', () => store.fetchContentTiers())
-await callOnce('collection:skin-collections', () => store.fetchSkinCollections())
+await callOnce('collection:content-tiers', () => catalogStore.fetchContentTiers())
+await callOnce('collection:skin-collections', () => catalogStore.fetchSkinCollections())
 
 // Fetch user-specific data on client-side only to avoid hydration mismatch
 onMounted(async () => {
-	await store.fetchWeapons()
-	await store.fetchSkins()
-	await store.fetchUserCollection()
+	await catalogStore.fetchWeapons()
+	await catalogStore.fetchSkins()
+	await collectionStore.fetchCollection()
 })
 
-const ownedCount = computed(() => store.owned.length)
+const ownedCount = computed(() => collectionStore.owned.length)
 
 // helper: normalize API categories to nice labels + order
 const categoryLabel = (raw?: string) => {
@@ -176,7 +178,7 @@ const categoryOrder = [
 
 const groupedWeapons = computed(() => {
 	const groups = new Map<string, ValorantWeapon[]>()
-	for (const w of store.weapons) {
+	for (const w of catalogStore.weapons) {
 		const label = categoryLabel(w.category)
 		if (!groups.has(label)) groups.set(label, [])
 		groups.get(label)!.push(w)
@@ -190,7 +192,7 @@ const groupedWeapons = computed(() => {
 // Build owned skins by weapon map for quick lookup
 const ownedByWeapon = computed(() => {
 	const map: Record<string, Skin[]> = {}
-	for (const s of store.owned) {
+	for (const s of collectionStore.owned) {
 		const wid = s.weapon || ''
 		if (!wid) continue
 		if (!map[wid]) map[wid] = []
@@ -214,7 +216,7 @@ const carouselImagesForWeapon = (weaponId?: string): string[] =>
 	ownedForWeapon(weaponId)
 		.map((skin) => {
 			// Check if this skin has a favorite chroma
-			const favoriteChromaUuid = store.ownedFavoriteChromas[skin.uuid || '']
+			const favoriteChromaUuid = collectionStore.favoriteChromas[skin.uuid || '']
 			if (favoriteChromaUuid && skin.chromas) {
 				// Find the favorite chroma and use its image
 				const favoriteChroma = skin.chromas.find((c) => c.uuid === favoriteChromaUuid)
@@ -280,12 +282,12 @@ const seedDemoOwned = () => {
 	if (!isDev) return
 	let genId = 100000
 	const maxPerWeapon = 2
-	for (const w of store.weapons) {
+	for (const w of catalogStore.weapons) {
 		const wid = w.uuid || ''
 		if (!wid) continue
-		const candidates = store.skins.filter((s) => s.weapon === wid)
+		const candidates = catalogStore.skins.filter((s) => s.weapon === wid)
 		if (candidates.length) {
-			for (const s of candidates.slice(0, maxPerWeapon)) store.addOwned(s)
+			for (const s of candidates.slice(0, maxPerWeapon)) collectionStore.addOwned(s)
 		} else {
 			const fake: Skin = {
 				id: genId++,
@@ -296,13 +298,13 @@ const seedDemoOwned = () => {
 				tier: null,
 				tier_id: ''
 			}
-			store.addOwned(fake)
+			collectionStore.addOwned(fake)
 		}
 	}
 }
 
 const clearDemoOwned = () => {
 	if (!isDev) return
-	store.owned = []
+	collectionStore.owned = []
 }
 </script>

@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { useAuthStore } from '~/stores/auth'
+import { useAuthStore } from '@/stores/auth'
 
 definePageMeta({
 	layout: 'auth'

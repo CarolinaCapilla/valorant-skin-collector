@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '~/stores/auth'
+import { useAuthStore } from '@/stores/auth'
 
 const toaster = { position: 'top-right' as const }
 const authStore = useAuthStore()
