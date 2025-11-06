@@ -140,10 +140,7 @@ export const useAuthStore = defineStore('auth', {
 				console.error('Logout error:', error)
 			} finally {
 				// Always clear local state regardless of API response
-				this.user = null
-				this.token = null
-				this.isAuthenticated = false
-				this.loading = false
+				this.$reset()
 				localStorage.removeItem('auth_token')
 			}
 		},

@@ -74,8 +74,7 @@ export const useWishlistStore = defineStore('wishlist', {
 				})
 			} catch (error) {
 				console.error('Failed to fetch user wishlist', error)
-				this.wishlist = []
-				this.favoriteChromas = {}
+				this.$reset()
 			}
 		},
 

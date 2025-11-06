@@ -31,10 +31,7 @@ export const useFiltersStore = defineStore('filters', {
 
 	actions: {
 		clearAll() {
-			this.weapon = ''
-			this.collection = ''
-			this.tier = ''
-			this.search = ''
+			this.$reset()
 		},
 		setFilter(key: 'weapon' | 'collection' | 'tier' | 'search', value: string) {
 			this[key] = value

@@ -69,8 +69,7 @@ export const useCollectionStore = defineStore('collection', {
 				})
 			} catch (error) {
 				console.error('Failed to fetch user collection', error)
-				this.owned = []
-				this.favoriteChromas = {}
+				this.$reset()
 			}
 		},
 		addOwned(skin: Skin) {
