@@ -2,42 +2,88 @@
 	<div
 		class="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 p-4 m-6 rounded-lg"
 	>
-		<!-- Filter dropdowns only on mobile, dropdowns + clear button on desktop -->
 		<div class="flex flex-wrap items-center gap-3 flex-1">
-			<USelect
-				v-model="weapon"
-				:items="weaponDictionary"
-				placeholder="Weapon Type"
-				:ui="{
-					placeholder: 'text-neutral-50',
-					value: 'text-white font-semibold',
-					trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-				}"
-				class="w-38"
-			/>
+			<div class="relative">
+				<USelect
+					v-model="weapon"
+					:items="weaponDictionary"
+					placeholder="Weapon Type"
+					:ui="{
+						placeholder: 'text-neutral-50',
+						value: 'text-white font-semibold',
+						trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+					}"
+					class="w-38"
+				/>
+				<UButton
+					v-if="weapon"
+					icon="i-lucide-circle-x"
+					variant="link"
+					size="xs"
+					color="neutral"
+					aria-label="Clear weapon filter"
+					class="absolute right-8 top-1/2 -translate-y-1/2 z-10"
+					:ui="{
+						leadingIcon: 'text-primary'
+					}"
+					@click.stop="filters.clearFilter('weapon')"
+				/>
+			</div>
 
-			<USelect
-				v-model="collection"
-				:items="collectionDictionary"
-				placeholder="Collection"
-				:ui="{
-					placeholder: 'text-neutral-50',
-					value: 'text-white font-semibold',
-					trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-				}"
-				class="w-38"
-			/>
-			<USelect
-				v-model="tier"
-				:items="contentTierDictionary"
-				placeholder="Skin Tier"
-				:ui="{
-					placeholder: 'text-neutral-50',
-					value: 'text-white font-semibold',
-					trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-				}"
-				class="w-38"
-			/>
+			<div class="relative">
+				<USelect
+					v-model="collection"
+					:items="collectionDictionary"
+					placeholder="Collection"
+					:ui="{
+						placeholder: 'text-neutral-50',
+						value: 'text-white font-semibold',
+						trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+					}"
+					class="w-38"
+				/>
+				<UButton
+					v-if="collection"
+					icon="i-lucide-circle-x"
+					variant="link"
+					size="xs"
+					color="neutral"
+					aria-label="Clear collection filter"
+					class="absolute right-8 top-1/2 -translate-y-1/2 z-10"
+					:ui="{
+						leadingIcon: 'text-primary'
+					}"
+					@click.stop="filters.clearFilter('collection')"
+				/>
+			</div>
+
+			<div class="relative">
+				<USelect
+					v-model="tier"
+					:items="contentTierDictionary"
+					placeholder="Skin Tier"
+					:ui="{
+						placeholder: 'text-neutral-50',
+						value: 'text-white font-semibold',
+						trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
+					}"
+					class="w-38"
+				/>
+				<UButton
+					v-if="tier"
+					icon="i-lucide-circle-x"
+					variant="link"
+					size="xs"
+					color="neutral"
+					aria-label="Clear tier filter"
+					class="absolute right-8 top-1/2 -translate-y-1/2 z-10"
+					:ui="{
+						leadingIcon: 'text-primary'
+					}"
+					@click.stop="filters.clearFilter('tier')"
+				/>
+			</div>
+
 			<!-- Clear button only visible on desktop -->
 			<UButton
 				class="ml-2 hidden sm:block"
@@ -129,7 +175,7 @@ const clearSearchQuery = async () => {
 
 	await new Promise((r) => setTimeout(r, 100))
 
-	filters.search = ''
+	filters.clearFilter('search')
 
 	isClearingQuery.value = false
 }
