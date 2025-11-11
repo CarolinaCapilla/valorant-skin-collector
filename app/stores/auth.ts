@@ -127,7 +127,6 @@ export const useAuthStore = defineStore('auth', {
 				const runtime = useRuntimeConfig()
 				const BACKEND_BASE_URL = runtime.public?.apiBaseUrl ?? 'http://localhost:8000'
 
-				// Call logout endpoint with token if available
 				if (this.token) {
 					await $fetch(`${BACKEND_BASE_URL}/api/v1/logout`, {
 						method: 'POST',
@@ -139,8 +138,12 @@ export const useAuthStore = defineStore('auth', {
 			} catch (error) {
 				console.error('Logout error:', error)
 			} finally {
-				// Always clear local state regardless of API response
-				this.$reset()
+				// Cannot use $reset() here because we need to ensure loading is false when logging out completes
+				this.user = null
+				this.token = null
+				this.isAuthenticated = false
+				this.loading = false
+				this.error = null
 				localStorage.removeItem('auth_token')
 			}
 		},

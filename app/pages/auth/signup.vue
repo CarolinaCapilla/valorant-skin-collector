@@ -83,10 +83,12 @@ const providers = [
 
 const schema = z
 	.object({
-		name: z.string().min(1, 'Name is required'),
-		email: z.string().email('Invalid email'),
-		password: z.string().min(8, 'Must be at least 8 characters'),
-		password_confirmation: z.string().min(8, 'Must be at least 8 characters')
+		name: z.string('Name is required').min(1, 'Name is required'),
+		email: z.string('Email is required').min(1, 'Email is required').email('Invalid email'),
+		password: z.string('Password is required').min(8, 'Must be at least 8 characters'),
+		password_confirmation: z
+			.string('Please confirm your password')
+			.min(8, 'Must be at least 8 characters')
 	})
 	.refine((data) => data.password === data.password_confirmation, {
 		path: ['password_confirmation'],
